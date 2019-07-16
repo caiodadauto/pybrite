@@ -18,11 +18,12 @@ environment variable.
 ## Usage
 Basically, `pybrite` translate the topologies created by *BRITE* to the undirected graph structure defined by `graph_tool` package.
 All graphs delivery by `pybrite` have two associated properties, one for vertices (called *pos*, which is the position) and
-other for edges (called *weight*, which is the distance between vertices). The usage example is presented in this jupyter notebook.
+other for edges (called *weight*, which is the distance between vertices). The usage example is presented in
+this [jupyter notebook](https://github.com/caiodadauto/pybrite/blob/master/Usage.ipynb).
 
 ## Credits
 The core of the `pybrite` was implemented by *Alberto Medina* and *Anukool Lakhina* from *Boston University*. The original documentation
-for this project can be found here.
+for this project can be found [here](https://www.cs.bu.edu/brite/index.html).
 
 ## Licence
 The core follow copyright from *Boston University*, which can be read below
