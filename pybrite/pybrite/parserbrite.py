@@ -1,7 +1,8 @@
 import re
 import os
 
-import graph_tool as gt
+# import graph_tool as gt
+import networkx as nx
 
 from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH
 
@@ -22,9 +23,10 @@ def config_brite(N, m=2):
         os.rename(BRITE_CONFIG_PATH + ".tmp", BRITE_CONFIG_PATH)
 
 def brite_to_graph():
-    G = gt.Graph(directed=False)
-    G.vp.pos = G.new_vertex_property("vector<float>")
-    G.ep.weight = G.new_edge_property("float")
+    # G = gt.Graph(directed=False)
+    # G.vp.pos = G.new_vertex_property("vector<float>")
+    # G.ep.weight = G.new_edge_property("float")
+    G = nx.Graph();
 
     is_node = False
     is_edge = False
@@ -40,7 +42,8 @@ def brite_to_graph():
                 break
             if topology_line.search(line):
                 n_nodes, n_edges = int(graph_size.search(line).groups()[0]), int(graph_size.search(line).groups()[1])
-                G.add_vertex(n_nodes)
+
+                # G.add_vertex(n_nodes)
             elif start_nodes.search(line):
                 is_node = True
                 continue
@@ -58,21 +61,26 @@ def brite_to_graph():
                 features = re.split(r'\s', line)
                 if node_offset < 0:
                     node_offset = int(features[0])
-                v = G.vertex(int(features[0]) - node_offset)
+                v = int(features[0]) - node_offset
                 x_pos = float(features[1])
                 y_pos = float(features[2])
-                G.vp.pos[v] = [x_pos, y_pos]
+                G.add_node(v, pos=[x_pos, y_pos])
+
+                # v = G.vertex(int(features[0]) - node_offset)
+                # G.vp.pos[v] = [x_pos, y_pos]
             elif is_edge:
                 if not line.strip():
                     is_edge = False
                     continue
                 features = re.split(r'\s', line)
 
-                sender = G.vertex(int(features[1]) - node_offset)
-                receiver = G.vertex(int(features[2]) - node_offset)
+                sender = int(features[1]) - node_offset
+                receiver = int(features[2]) - node_offset
                 weight = float(features[3])
-                G.add_edge(sender, receiver)
+                G.add_edge(sender, receiver, distance=weight)
 
-                e = G.edge(sender, receiver)
-                G.ep.weight[e] = weight
+                # sender = G.vertex(int(features[1]) - node_offset)
+                # receiver = G.vertex(int(features[2]) - node_offset)
+                # e = G.edge(sender, receiver)
+                # G.ep.weight[e] = weight
     return G
