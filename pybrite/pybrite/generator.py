@@ -8,12 +8,12 @@ from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH, SEED_BRITE_PATH, LAST_SE
 
 
 def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), seed=None):
+    min_n, max_n = interval_node
+    min_m, max_m = interval_m
     random_state = np.random.RandomState(seed=seed)
     while True:
         input_batch = []
         target_batch = []
-        min_n, max_n = interval_node
-        min_m, max_m = interval_m
         for _ in range(n_batch):
             n = random_state.choice(range(min_n, max_n + 1))
             m = random_state.choice(range(min_m, max_m + 1))
