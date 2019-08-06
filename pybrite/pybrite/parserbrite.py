@@ -4,6 +4,7 @@ import os
 # import graph_tool as gt
 import networkx as nx
 
+from .utils import ip_generator
 from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH
 
 
@@ -22,7 +23,7 @@ def config_brite(N, m=2):
                     out_f.write(line)
         os.rename(BRITE_CONFIG_PATH + ".tmp", BRITE_CONFIG_PATH)
 
-def brite_to_graph():
+def brite_to_graph(random_state=None):
     # G = gt.Graph(directed=False)
     # G.vp.pos = G.new_vertex_property("vector<float>")
     # G.ep.weight = G.new_edge_property("float")
@@ -42,7 +43,7 @@ def brite_to_graph():
                 break
             if topology_line.search(line):
                 n_nodes, n_edges = int(graph_size.search(line).groups()[0]), int(graph_size.search(line).groups()[1])
-
+                ip_gen = ip_generator(n_nodes, random_state=random_state)
                 # G.add_vertex(n_nodes)
             elif start_nodes.search(line):
                 is_node = True
@@ -64,7 +65,7 @@ def brite_to_graph():
                 v = int(features[0]) - node_offset
                 x_pos = float(features[1])
                 y_pos = float(features[2])
-                G.add_node(v, pos=[x_pos, y_pos])
+                G.add_node(v, pos=[x_pos, y_pos], ip=next(ip_gen, None))
 
                 # v = G.vertex(int(features[0]) - node_offset)
                 # G.vp.pos[v] = [x_pos, y_pos]
