@@ -7,10 +7,10 @@ from .utils import add_shortest_path, graph_to_input_target
 from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH, SEED_BRITE_PATH, LAST_SEED_BRITE_PATH
 
 
-def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), seed=None):
+def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), random_state=None):
     min_n, max_n = interval_node
     min_m, max_m = interval_m
-    random_state = np.random.RandomState(seed=seed)
+    random_state = random_state if random_state else np.random.RandomState()
     while True:
         input_batch = []
         target_batch = []
