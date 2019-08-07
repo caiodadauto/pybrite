@@ -12,7 +12,7 @@ def ip_generator(size, random_state=None):
         while( np.any([np.all(ip_bool) for ip_bool in ip_set == ip]) ):
             ip = random_state.choice([0,1], size=32)
         ip_set[i] = ip
-        yield np.array(ip)
+        yield np.array(ip, dtype=float)
 
 def pairwise(iterable):
     a, b = itertools.tee(iterable)
