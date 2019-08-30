@@ -38,14 +38,16 @@ def add_shortest_path(graph, random_state):
 
     # Add "solution" attributes to the edges.
     solution_edges = []
+    min_distance = []
     for node, (distance, path) in all_paths:
         if node != end:
             solution_edges.extend(list( pairwise(path[end]) ))
+        min_distance.append(distance[end])
     digraph.add_edges_from(set_diff(digraph.edges(), solution_edges), solution=False)
     digraph.add_edges_from(solution_edges, solution=True)
-    return digraph, end
+    return digraph, end, min_distance
 
-def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
+def graph_to_input_target(graph, end, min_distance, input_fields=None, target_fields=None):
     def create_feature(attr, fields):
         if fields == ():
             return None
@@ -75,5 +77,5 @@ def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
         target_graph.add_edge(sender, receiver, features=target_edge)
 
     input_graph.graph["features"] = end_node
-    target_graph.graph["features"] = end_node
+    target_graph.graph["features"] = np.array(min_distance, dtype=float)
     return input_graph, target_graph
