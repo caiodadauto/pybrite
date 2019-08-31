@@ -18,8 +18,8 @@ def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), random_stat
             n = random_state.choice(range(min_n, max_n + 1))
             m = random_state.choice(range(min_m, max_m + 1))
             graph = get_graph(n, m, random_state=random_state)
-            di_graph, target_node, min_distance = add_shortest_path(graph, random_state=random_state)
-            input_graph, target_graph = graph_to_input_target(di_graph, target_node, min_distance)
+            di_graph, target_node = add_shortest_path(graph, random_state=random_state)
+            input_graph, target_graph = graph_to_input_target(di_graph, target_node)
             input_batch.append(input_graph)
             target_batch.append(target_graph)
         yield input_batch, target_batch
