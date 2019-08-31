@@ -42,12 +42,13 @@ def add_shortest_path(graph, random_state):
     for node, (distance, path) in all_paths:
         if node != end:
             solution_edges.extend(list( pairwise(path[end]) ))
-        min_distance.append(distance[end])
+        min_distance.append((node, dict(min_distance_to_end=distance[end])))
+    digraph.add_nodes_from(min_distance)
     digraph.add_edges_from(set_diff(digraph.edges(), solution_edges), solution=False)
     digraph.add_edges_from(solution_edges, solution=True)
-    return digraph, end, min_distance
+    return digraph, end
 
-def graph_to_input_target(graph, end, min_distance, input_fields=None, target_fields=None):
+def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
     def create_feature(attr, fields):
         if fields == ():
             return None
@@ -55,7 +56,7 @@ def graph_to_input_target(graph, end, min_distance, input_fields=None, target_fi
 
     input_node_fields = input_fields["node"] if input_fields else ("ip",)
     input_edge_fields = input_fields["edge"] if input_fields else ("distance",)
-    target_node_fields = target_fields["node"] if input_fields else ("ip",)
+    target_node_fields = target_fields["node"] if input_fields else ("min_distance_to_end",)
     target_edge_fields = target_fields["edge"] if input_fields else ("solution",)
 
     input_graph = graph.copy()
@@ -77,5 +78,5 @@ def graph_to_input_target(graph, end, min_distance, input_fields=None, target_fi
         target_graph.add_edge(sender, receiver, features=target_edge)
 
     input_graph.graph["features"] = end_node
-    target_graph.graph["features"] = np.array(min_distance, dtype=float)
+    target_graph.graph["features"] = end_node
     return input_graph, target_graph
