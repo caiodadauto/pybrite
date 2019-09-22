@@ -54,10 +54,10 @@ def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
             return None
         return np.hstack( [np.array(attr[field], dtype=float) for field in fields] )
 
-    input_node_fields = input_fields["node"] if input_fields else ("ip",)
-    input_edge_fields = input_fields["edge"] if input_fields else ("distance",)
-    target_node_fields = target_fields["node"] if input_fields else ("min_distance_to_end", "hops_to_end")
-    target_edge_fields = target_fields["edge"] if input_fields else ("solution",)
+    input_node_fields = input_fields["node"] if input_fields and "node" in input_fields else ("ip",)
+    input_edge_fields = input_fields["edge"] if input_fields and "edge" in input_fields else ("distance",)
+    target_node_fields = target_fields["node"] if target_fields and "node" in target_fields else ("min_distance_to_end", "hops_to_end")
+    target_edge_fields = target_fields["edge"] if target_fields and "edge" in target_fields else ("solution",)
 
     input_graph = graph.copy()
     target_graph = graph.copy()
