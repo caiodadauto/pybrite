@@ -48,7 +48,7 @@ def add_shortest_path(graph, random_state):
     digraph.add_edges_from(solution_edges, solution=True)
     return digraph, end
 
-def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
+def graph_to_input_target(graph, end, input_fields=None, target_fields=None, global_field=None):
     def create_feature(attr, fields):
         if fields == ():
             return None
@@ -64,7 +64,7 @@ def graph_to_input_target(graph, end, input_fields=None, target_fields=None):
 
     for node_index, node_feature in graph.nodes(data=True):
         if node_index == end:
-            end_node = node_feature["ip"]
+            end_node = node_feature[global_field if global_field else "ip"]
         input_graph.add_node(
             node_index, features=create_feature(node_feature, input_node_fields))
         target_graph.add_node(
