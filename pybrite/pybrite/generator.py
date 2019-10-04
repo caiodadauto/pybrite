@@ -14,6 +14,7 @@ def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), random_stat
     while True:
         input_batch = []
         target_batch = []
+        pos_batch = []
         for _ in range(n_batch):
             n = random_state.choice(range(min_n, max_n + 1))
             m = random_state.choice(range(min_m, max_m + 1))
@@ -24,7 +25,8 @@ def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), random_stat
                 target_fields=target_fields, global_field=global_field)
             input_batch.append(input_graph)
             target_batch.append(target_graph)
-        yield input_batch, target_batch
+            pos_batch.append(dict(graph.node(data="pos")))
+        yield input_batch, target_batch, pos_batch
 
 def get_graph(n, m=2, random_state=None):
     config_brite(n, m)
