@@ -70,7 +70,7 @@ def graph_to_input_target(graph, end, is_classification=True, input_fields=None,
         target_graph.add_node(
             node_index, features=create_feature(node_feature, target_node_fields))
 
-    for receiver, sender, features in graph.edges(data=True):
+    for sender, receiver, features in graph.edges(data=True):
         input_graph.add_edge(
             sender, receiver, features=create_feature(features, input_edge_fields))
 
