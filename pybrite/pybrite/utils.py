@@ -46,9 +46,14 @@ def add_shortest_path(graph, random_state):
     digraph.add_nodes_from(min_distance)
     digraph.add_edges_from(set_diff(digraph.edges(), solution_edges), solution=False)
     digraph.add_edges_from(solution_edges, solution=True)
-    return digraph, end
+    digraph.graph["target"] = end
+    return digraph
 
+<<<<<<< HEAD
 def graph_to_input_target(graph, end, is_classification=True, input_fields=None, target_fields=None, global_field=None):
+=======
+def graph_to_input_target(graph, bidim_solution=True, input_fields=None, target_fields=None, global_field=None):
+>>>>>>> master
     def create_feature(attr, fields):
         if fields == ():
             return None
@@ -62,6 +67,7 @@ def graph_to_input_target(graph, end, is_classification=True, input_fields=None,
     input_graph = graph.copy()
     target_graph = graph.copy()
 
+    end = graph.graph["target"]
     for node_index, node_feature in graph.nodes(data=True):
         if node_index == end:
             end_node = node_feature[global_field if global_field else "ip"]
@@ -74,7 +80,11 @@ def graph_to_input_target(graph, end, is_classification=True, input_fields=None,
         input_graph.add_edge(
             sender, receiver, features=create_feature(features, input_edge_fields))
 
+<<<<<<< HEAD
         if is_classification:
+=======
+        if bidim_solution:
+>>>>>>> master
             target_edge = to_one_hot(
                 create_feature(features, target_edge_fields).astype(int), 2)[0]
         else:
