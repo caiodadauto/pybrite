@@ -49,11 +49,7 @@ def add_shortest_path(graph, random_state):
     digraph.graph["target"] = end
     return digraph
 
-<<<<<<< HEAD
-def graph_to_input_target(graph, end, is_classification=True, input_fields=None, target_fields=None, global_field=None):
-=======
 def graph_to_input_target(graph, bidim_solution=True, input_fields=None, target_fields=None, global_field=None):
->>>>>>> master
     def create_feature(attr, fields):
         if fields == ():
             return None
@@ -80,11 +76,7 @@ def graph_to_input_target(graph, bidim_solution=True, input_fields=None, target_
         input_graph.add_edge(
             sender, receiver, features=create_feature(features, input_edge_fields))
 
-<<<<<<< HEAD
-        if is_classification:
-=======
         if bidim_solution:
->>>>>>> master
             target_edge = to_one_hot(
                 create_feature(features, target_edge_fields).astype(int), 2)[0]
         else:

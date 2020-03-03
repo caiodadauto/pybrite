@@ -9,9 +9,6 @@ from .utils import add_shortest_path, graph_to_input_target
 from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH, SEED_BRITE_PATH, LAST_SEED_BRITE_PATH
 
 
-<<<<<<< HEAD
-def graph_batch_generator(n_batch, interval_node, interval_m=(2, 2), random_state=None, is_classification=True, input_fields=None, target_fields=None, global_field=None):
-=======
 def create_graph(n, m, random_state):
     graph = get_graph(n, m, random_state=random_state)
     digraph = add_shortest_path(graph, random_state=random_state)
@@ -78,7 +75,6 @@ def graph_batch_generator(n_batch, interval_node,
                           interval_m=(2, 2), random_state=None,
                           bidim_solution=True, input_fields=None,
                           target_fields=None, global_field=None):
->>>>>>> master
     min_n, max_n = interval_node
     min_m, max_m = interval_m
     random_state = random_state if random_state else np.random.RandomState()
@@ -89,11 +85,11 @@ def graph_batch_generator(n_batch, interval_node,
         for _ in range(n_batch):
             n = random_state.choice(range(min_n, max_n + 1))
             m = random_state.choice(range(min_m, max_m + 1))
-<<<<<<< HEAD
-            graph = get_graph(n, m, random_state=random_state)
-            di_graph, target_node = add_shortest_path(graph, random_state=random_state)
+            digraph = create_graph(n, m, random_state)
             input_graph, target_graph = graph_to_input_target(
-                di_graph, target_node, is_classification=is_classification, input_fields=input_fields,
+                digraph, bidim_solution=bidim_solution, input_fields=input_fields,
                 target_fields=target_fields, global_field=global_field)
             input_batch.append(input_graph)
             target_batch.append(target_graph)
+            pos_batch.append(dict(digraph.node(data="pos")))
+        yield input_batch, target_batch, pos_batch
