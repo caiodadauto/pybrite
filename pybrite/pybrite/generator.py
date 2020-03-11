@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import networkx as nx
 
+from tqdm import tqdm
 from .parserbrite import config_brite, brite_to_graph
 from .utils import add_shortest_path, graph_to_input_target
 from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH, SEED_BRITE_PATH, LAST_SEED_BRITE_PATH
@@ -19,7 +20,7 @@ def create_static_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), 
     min_n, max_n = interval_node
     min_m, max_m = interval_m
     random_state = random_state if random_state else np.random.RandomState()
-    for i in range(n_graphs):
+    for i in tqdm(range(n_graphs)):
         n = random_state.choice(range(min_n, max_n + 1))
         m = random_state.choice(range(min_m, max_m + 1))
         digraph = create_graph(n, m, random_state)
@@ -28,7 +29,6 @@ def create_static_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), 
         f.write("min,max\n")
         f.write("n,{},{}\n".format(min_n, max_n))
         f.write("m,{},{}".format(min_m, max_m))
-
 
 def get_graph(n, m=2, random_state=None):
     config_brite(n, m)
