@@ -8,7 +8,9 @@ from distutils.command.build import build
 
 BASE_PATH = Path(os.path.dirname(os.path.abspath(__file__)))
 BRITE_PATH = BASE_PATH.joinpath('brite_cpp')
-BIN_PATH = Path.home().joinpath('.local/bin')
+BIN_PATH = Path('/usr/local/bin')
+if not os.access(BIN_PATH, os.W_OK):
+    BIN_PATH = Path.home().joinpath('.local/bin')
 
 if not BIN_PATH.exists():
     os.makedirs(BIN_PATH)
