@@ -18,7 +18,7 @@ def interval(s):
     except:
         raise argparse.ArgumentTypeError("Interval must be min,max")
 
-def create_data(size, path, n_interval, m_interval, is_train, offset):
+def create_data(size, path, n_interval, m_interval, offset):
     pb.create_static_dataset(os.path.abspath(path), size, n_interval, m_interval, offset=offset)
     get_stats(path)
 
@@ -69,12 +69,21 @@ if __name__ == "__main__":
     p.add_argument("--n-interval", type=interval, default=(8,20), help="Interval for number of nodes")
     p.add_argument("--m-interval", type=interval, default=(2,2), help="Interval for connectivity degree")
     p.add_argument("--test", action="store_true", help="Save data for test")
+    p.add_argument("--generalization", action="store_true", help="Save data for test in the generalization directory")
     p.add_argument("--overwrite", action="store_true", help="Append to a dataset already existent")
     args = p.parse_args()
 
-    path = os.path.join(args.path, "train/") if not args.test else os.path.join(args.path, "test/")
+    if args.test:
+        if args.generalization:
+            path = os.path.join(args.path, "test_generalization/")
+        else:
+            path = os.path.join(args.path, "test_non_generalization/")
+    else:
+        path = os.path.join(args.path, "train/")
+
     if not (os.path.isdir(path)):
         os.makedirs(path)
+        offset = 0
     else:
         if args.overwrite:
             go = input("The data will be overwrite, do you want to continue? [yN]")
@@ -87,5 +96,4 @@ if __name__ == "__main__":
         else:
             offset = get_last(path)
 
-    is_train = True if not args.test else False
-    create_data(args.size, path, args.n_interval, args.m_interval, is_train, offset)
+    create_data(args.size, path, args.n_interval, args.m_interval, offset)
