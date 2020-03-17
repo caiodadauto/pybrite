@@ -124,3 +124,5 @@ dmypy.json
 .pyre/
 
 /dataset
+/client_secrets.json
+/mycreds.txt
