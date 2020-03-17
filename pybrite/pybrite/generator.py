@@ -15,7 +15,7 @@ def create_graph(n, m, random_state):
     digraph = add_shortest_path(graph, random_state=random_state)
     return digraph
 
-def create_static_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), random_state=None):
+def create_static_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), random_state=None, offset=0):
     graphdir = Path(graphdir)
     min_n, max_n = interval_node
     min_m, max_m = interval_m
@@ -24,7 +24,7 @@ def create_static_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), 
         n = random_state.choice(range(min_n, max_n + 1))
         m = random_state.choice(range(min_m, max_m + 1))
         digraph = create_graph(n, m, random_state)
-        nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(i)))
+        nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(i + offset)))
     with open(graphdir.joinpath("info.dat"), "w") as f:
         f.write("min,max\n")
         f.write("n,{},{}\n".format(min_n, max_n))
