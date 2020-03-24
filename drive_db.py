@@ -44,7 +44,7 @@ def logdrive():
 if __name__ == '__main__':
   p = argparse.ArgumentParser()
   p.add_argument("path", type=str, help="Path for Dataset")
-  p.add_argument("--id-folder", type=str, default='', help="Folder in drive to store dataset")
+  p.add_argument("--id-folder", type=str, default="1DEHJZQC6AFoolUeQqC6NnwPVg0RFZ8iK", help="Folder in drive to store dataset")
   p.add_argument("--download", action="store_true", help="Make download of Dataset")
   args = p.parse_args()
 
