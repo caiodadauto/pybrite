@@ -1,4 +1,0 @@
-[core]
-    remote = remotefolder
-['remote "remotefolder"']
-    url = /tmp/topologies/

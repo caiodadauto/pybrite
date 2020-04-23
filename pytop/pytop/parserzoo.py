@@ -8,6 +8,7 @@ import networkx as nx
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy import spatial
+from scipy.optimize import minimize
 
 from .utils import ip_generator, ensure_connection
 
@@ -66,6 +67,10 @@ def ignore_multigraph(path):
     return graph
 
 def add_attr(G, random_state):
+    def obj(x, v):
+        norms = [np.linalg.norm(v[i] - x) for i in range(len(v))]
+        return np.sum(norms)
+
     size = 200
     empty_polar = []
     nodes_attr = G.nodes(data=True)
@@ -95,8 +100,7 @@ def add_attr(G, random_state):
                 already_visit.append(reference_node)
                 if len(nn_pos) > 1:
                     nn_pos = np.stack(nn_pos)
-                    A = (nn_pos[0] - nn_pos[1:]) * 2
-                    n_pos = np.dot( np.linalg.pinv(A), (nn_pos[0]**2 - nn_pos[1:]**2).sum(axis=1) )
+                    n_pos = minimize(obj, random_state.rand(2), args=(nn_pos,)).x
                     do = False
                 else:
                     reference_node = to_visit.pop()
@@ -123,9 +127,14 @@ def add_attr(G, random_state):
     G.add_weighted_edges_from(cost_edges, weight="distance")
 
 
-def get_zoo_graph(path, random_state=None):
+def get_zoo_graph(path, range_nodes, random_state=None):
     path = Path(path)
     G = ignore_multigraph(path)
+
+    if not G.number_of_nodes() in range_nodes:
+        return None
+
     G = ensure_connection(G)
     add_attr(G, random_state)
+    G.graph["from"] = "Zoo"
     return G

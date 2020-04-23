@@ -1,4 +1,4 @@
-import subprocess as sub
+import os
 from pathlib import Path
 
 import numpy as np
@@ -50,19 +50,23 @@ def create_brite_graph(n, m, node_placement, random_state):
     return digraph
 
 def create_static_zoo_dataset(graphdir, gmldir, interval_node, random_state=None, offset=0):
-    graphs = []
+    # graphs = []
+    name = 0
     graphdir = Path(graphdir)
     gmldir = Path(gmldir)
     min_n, max_n = interval_node
     range_nodes = list(range(min_n, max_n + 1))
     random_state = random_state if random_state else np.random.RandomState()
     gml_list = list(gmldir.glob('*.gml'))
-    for i, path in tqdm(enumerate(gml_list)):
-        G = get_zoo_graph(path, random_state=random_state)
-        if G.number_of_nodes() in range_nodes:
-            graphs.append((G, str(path)))
+    for i in tqdm(range(len(gml_list))):
+        G = get_zoo_graph(gml_list[i], range_nodes, random_state=random_state)
+        if G:
             digraph = add_shortest_path(G, random_state=random_state)
-            nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(i + offset)))
+            nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(name + offset)))
+            name += 1
+
+            # graphs.append((G, gml_list[i].stem))
+
     with open(graphdir.joinpath("info.dat"), "w") as f:
         f.write("min,max\n")
         f.write("n,{},{}\n".format(min_n, max_n))
@@ -70,12 +74,12 @@ def create_static_zoo_dataset(graphdir, gmldir, interval_node, random_state=None
     # def draw_graphs(graphs):
     #     import matplotlib.pyplot as plt
     #     i = 0
-    #     for G, p in graphs:
+    #     for G, path in graphs:
     #         i += 1
-    #         plt.figure(dpi=80)
+    #         plt.figure(dpi=130)
     #         nx.draw(G, node_size=40, pos=G.nodes(data="pos"))
-    #         plt.legend(loc="best", title=p, handles=[])
-    #         plt.savefig("%s.jpg"%i)
+    #         plt.legend(loc="best", title=path + " {:.2f}".format(2*G.number_of_edges() / G.number_of_nodes()), handles=[])
+    #         plt.savefig(os.path.join("visual", "%s.png"%i))
     #         plt.close()
     # draw_graphs(graphs)
 

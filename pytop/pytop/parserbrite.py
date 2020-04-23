@@ -1,5 +1,6 @@
 import re
 import os
+import subprocess as sub
 
 import networkx as nx
 
@@ -74,6 +75,7 @@ def brite_to_graph(random_state=None):
                 receiver = int(features[2]) - node_offset
                 weight = float(features[3])
                 G.add_edge(sender, receiver, distance=weight)
+    G.graph["from"] = "Brite"
     return G
 
 def get_brite_graph(n, m, node_placement, random_state):
