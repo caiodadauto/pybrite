@@ -1,16 +1,16 @@
 import re
 import os
 
-# import graph_tool as gt
 import networkx as nx
 
 from .utils import ip_generator
-from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH
+from .paths import GRAPH_BRITE_PATH, BRITE_CONFIG_PATH, SEED_BRITE_PATH, LAST_SEED_BRITE_PATH
 
 
-def config_brite(N, m=2):
+def config_brite(N, m=2, node_placement=1):
     node_line = re.compile(r'^(\s*N\s*=\s*\d+)')
     neighbor_line = re.compile(r'^(\s*m\s*=\s*\d+)')
+    placement_line = re.compile(r'^(\s*NodePlacement\s*=\s*\d+)')
     with open(BRITE_CONFIG_PATH + ".tmp", "w") as out_f:
         with open(BRITE_CONFIG_PATH, 'r') as in_f:
             lines = in_f.readlines()
@@ -19,14 +19,13 @@ def config_brite(N, m=2):
                     out_f.write("\tN = %s\n"%N)
                 elif neighbor_line.search(line):
                     out_f.write("\tm = %s\n"%m)
+                elif placement_line.search(line):
+                    out_f.write("\tNodePlacement = %s\n"%node_placement)
                 else:
                     out_f.write(line)
-        os.rename(BRITE_CONFIG_PATH + ".tmp", BRITE_CONFIG_PATH)
+    os.rename(BRITE_CONFIG_PATH + ".tmp", BRITE_CONFIG_PATH)
 
 def brite_to_graph(random_state=None):
-    # G = gt.Graph(directed=False)
-    # G.vp.pos = G.new_vertex_property("vector<float>")
-    # G.ep.weight = G.new_edge_property("float")
     G = nx.Graph();
 
     is_node = False
@@ -44,7 +43,6 @@ def brite_to_graph(random_state=None):
             if topology_line.search(line):
                 n_nodes, n_edges = int(graph_size.search(line).groups()[0]), int(graph_size.search(line).groups()[1])
                 ip_gen = ip_generator(n_nodes, random_state=random_state)
-                # G.add_vertex(n_nodes)
             elif start_nodes.search(line):
                 is_node = True
                 continue
@@ -66,9 +64,6 @@ def brite_to_graph(random_state=None):
                 x_pos = float(features[1])
                 y_pos = float(features[2])
                 G.add_node(v, pos=[x_pos, y_pos], ip=next(ip_gen, None))
-
-                # v = G.vertex(int(features[0]) - node_offset)
-                # G.vp.pos[v] = [x_pos, y_pos]
             elif is_edge:
                 if not line.strip():
                     is_edge = False
@@ -79,9 +74,10 @@ def brite_to_graph(random_state=None):
                 receiver = int(features[2]) - node_offset
                 weight = float(features[3])
                 G.add_edge(sender, receiver, distance=weight)
-
-                # sender = G.vertex(int(features[1]) - node_offset)
-                # receiver = G.vertex(int(features[2]) - node_offset)
-                # e = G.edge(sender, receiver)
-                # G.ep.weight[e] = weight
     return G
+
+def get_brite_graph(n, m, node_placement, random_state):
+    config_brite(n, m, node_placement)
+    cmd = ['cppgen', BRITE_CONFIG_PATH,  GRAPH_BRITE_PATH, SEED_BRITE_PATH, LAST_SEED_BRITE_PATH]
+    _ = sub.run(cmd, stdout=sub.PIPE)
+    return brite_to_graph(random_state=random_state)

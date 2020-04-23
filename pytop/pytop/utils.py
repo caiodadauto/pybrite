@@ -3,6 +3,19 @@ import itertools
 import numpy as np
 import networkx as nx
 
+
+def ensure_connection(graph):
+    max_n_node = 0
+    components = list(nx.connected_component_subgraphs(graph))
+    for i in range(len(components)):
+        size = components[i].number_of_nodes()
+        if max_n_node < size:
+            max_n_node = size
+            max_idx = i
+    if len(components) > 0:
+        largest_component = components[max_idx]
+    return largest_component
+
 def ip_generator(size, random_state=None):
     zero_ip = np.zeros(32)
     ip_set = np.array([zero_ip] * size)
@@ -41,7 +54,7 @@ def add_shortest_path(graph, random_state):
     min_distance = []
     for node, (distance, path) in all_paths:
         if node != end:
-            solution_edges.extend(list( pairwise(path[end]) ))
+                solution_edges.extend(list( pairwise(path[end]) ))
         min_distance.append((node, dict(min_distance_to_end=distance[end], hops_to_end=len(path[end]))))
     digraph.add_nodes_from(min_distance)
     digraph.add_edges_from(set_diff(digraph.edges(), solution_edges), solution=False)

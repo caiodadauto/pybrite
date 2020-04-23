@@ -18,8 +18,8 @@ def interval(s):
     except:
         raise argparse.ArgumentTypeError("Interval must be min,max")
 
-def create_data(size, path, n_interval, m_interval, offset):
-    pb.create_static_dataset(os.path.abspath(path), size, n_interval, m_interval, offset=offset)
+def create_data(size, path, n_interval, m_interval, placement_interval, offset):
+    pb.create_static_dataset(os.path.abspath(path), size, n_interval, m_interval, placement_interval, offset=offset)
     get_stats(path)
 
 def save_figs(data, params):
@@ -68,6 +68,7 @@ if __name__ == "__main__":
     p.add_argument("--path", type=str, default="dataset/", help="Path to save data")
     p.add_argument("--n-interval", type=interval, default=(8,20), help="Interval for number of nodes")
     p.add_argument("--m-interval", type=interval, default=(2,2), help="Interval for connectivity degree")
+    p.add_argument("--placement-interval", type=interval, default=(1,1), help="Interval for node placement parameter")
     p.add_argument("--test", action="store_true", help="Save data for test")
     p.add_argument("--generalization", action="store_true", help="Save data for test in the generalization directory")
     p.add_argument("--overwrite", action="store_true", help="Append to a dataset already existent")
@@ -96,4 +97,4 @@ if __name__ == "__main__":
         else:
             offset = get_last(path)
 
-    create_data(args.size, path, args.n_interval, args.m_interval, offset)
+    create_data(args.size, path, args.n_interval, args.m_interval, args.placement_interval, offset)

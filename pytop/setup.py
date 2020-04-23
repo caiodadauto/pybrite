@@ -1,7 +1,7 @@
 import os
 import subprocess as sub
 from pathlib import Path
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.command.build import build
 
@@ -27,7 +27,8 @@ class BriteBuild(build):
             sub.run(cmd_make, cwd=str(BRITE_PATH))
             sub.run(cmd_bin, cwd=str(BRITE_PATH))
 
-        self.execute(compile, [], 'Compiling brite')
+        if not os.path.isfile(BIN_PATH.joinpath('cppgen')):
+            self.execute(compile, [], 'Compiling brite')
         self.mkpath(self.build_lib)
 
 class BriteInstall(install):
@@ -49,15 +50,15 @@ class BriteInstall(install):
 
 
 setup(
-    name='pybrite',
+    name='pytop',
     version='0.1',
-    description='Topology generator based on Brite',
+    description='Topology generator based on Brite, ZooTopology and Caida itdk',
     maintainer='Caio Dadauto',
     maintainer_email='caio.dadauto@ic.unicamp.br',
     license='GPLv2',
-    packages=['pybrite'],
+    packages=['pytop'],
     package_data={
-        'pybrite': ['config/*']
+        'pytop': ['config/*']
     },
     # long_description=read('README.rst'),
     cmdclass={
