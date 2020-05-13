@@ -7,6 +7,8 @@ import pandas as pd
 import seaborn as sns
 import networkx as nx
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from matplotlib.patches import Rectangle
 
 import pytop as pt
 
@@ -18,17 +20,58 @@ def interval(s):
     except:
         raise argparse.ArgumentTypeError("Interval must be min,max")
 
-def save_figs(data, params):
+def save_figs(data, params, limits=None):
     sns.set_style("ticks")
     for x, y, name in params:
-        fig = plt.figure(dpi=300)
+        fig = plt.figure(dpi=200)
         ax = fig.subplots(1, 1, sharey=False)
-        min_x = np.floor(data[x].values.min() * 1.1) if data[x].values.min() < 0 else 0
-        min_y = np.floor(data[y].values.min() * 1.1) if data[y].values.min() < 0 else 0
-        max_x = np.ceil(data[x].values.max() * 1.1) if data[x].values.max() > 0 else 0
-        max_y = np.ceil(data[y].values.max() * 1.1) if data[y].values.max() > 0 else 0
-        sns.scatterplot(x=x, y=y, data=data, hue="Topology Class", style="Generator Tool")
-
+        min_x = np.floor(data[x].values.min() * 1.05) if data[x].values.min() < 0 else 0
+        min_y = np.floor(data[y].values.min() * 1.05) if data[y].values.min() < 0 else 0
+        max_x = np.ceil(data[x].values.max() * 1.05) if data[x].values.max() > 0 else 0
+        max_y = np.ceil(data[y].values.max() * 1.05) if data[y].values.max() > 0 else 0
+        sns.scatterplot(x=x, y=y, data=data, style="from", hue="from",
+                        ax=ax, legend="full", zorder=10, markers=["s", "X"], palette="Set1")
+        classes = data["Topology Class"].unique().tolist()
+        if limits:
+            if "Star or H&S" in classes:
+                x = np.arange(0, limits[0], limits[0] / 100)
+                if limits[1]:
+                    y = limits[1]
+                else:
+                    y = max_y
+                a = ax.add_patch(Rectangle((0, 0), limits[0], y, ec="k", ls="-", fc=(1,1,1,0), hatch='//', label="Ladder"))
+                handles, labels = ax.get_legend_handles_labels()
+                _ = handles.pop(labels.index("from"))
+                labels.remove("from")
+                ax.legend(handles=handles, loc='lower right', labels=labels)#data["from"].unique().tolist())
+            else:
+                x = limits[0]
+                if limits[1]:
+                    y = limits[1]
+                else:
+                    y = max_y
+                handles, labels = ax.get_legend_handles_labels()
+                _ = handles.pop(labels.index("from"))
+                labels.remove("from")
+                ax.legend(handles=handles, loc='lower right', labels=labels)
+                ax.axvline(x=x, color="k", lw=1)
+                ax.annotate("", xy=(x * .68, y * .88), xytext=(x, y * .88),
+                            arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color="k"))
+                ax.annotate("", xy=(x, y * .12), xytext=(x * 1.32, y * .12),
+                            arrowprops=dict(arrowstyle="<-", connectionstyle="arc3", color="k"))
+                plt.text(x * .68, y * .88, 'Star',
+                         {'color': 'black', 'fontsize': 10, 'ha': 'center', 'va': 'center',
+                          'bbox': dict(boxstyle="round", fc="white", ec="black", pad=0.2)})
+                plt.text(x * 1.32, y * .12, 'H&S',
+                         {'color': 'black', 'fontsize': 10, 'ha': 'center', 'va': 'center',
+                          'bbox': dict(boxstyle="round", fc="white", ec="black", pad=0.2)})
+                ax.plot([x], [y * .12], marker='o', color='k', mec='k', mew=1.2, ls='', zorder=10)
+                ax.plot([x], [y * .88], marker='o', color='k', mfc=(1,1,1), mec='k', mew=1.2, ls='', zorder=10)
+        else:
+            handles, labels = ax.get_legend_handles_labels()
+            _ = handles.pop(labels.index("from"))
+            labels.remove("from")
+            ax.legend(handles=handles, loc='lower right', labels=labels)
         ax.set_xticks(np.arange(min_x, max_x, (max_x - min_x) / 5))
         ax.set_yticks(np.arange(min_y, max_y, (max_y - min_y) / 5))
         ax.yaxis.grid(True)
@@ -39,9 +82,20 @@ def save_figs(data, params):
         fig.clear()
         plt.close()
 
-def get_stats(path, path_stats):
+def get_stats(path, path_stats, imext, split_by_class=False):
     path_stats = Path(path_stats)
     path = Path(path)
+    ladder_dir = path.joinpath("Ladder/")
+    star_dir = path.joinpath("Star/")
+    hs_dir = path.joinpath("H&S/")
+    if split_by_class:
+        for d in [ladder_dir, star_dir, hs_dir]:
+            if not os.path.isdir(d):
+                os.makedirs(d)
+    else:
+        for d in [ladder_dir, star_dir, hs_dir]:
+            if os.path.isdir(d):
+                os.rmdir(d)
     graph_paths = list(path.glob("*.gpickle"))
     print("Generate Stats...", end="\t")
     star_hs = []
@@ -54,9 +108,10 @@ def get_stats(path, path_stats):
         ("Assortativity Coefficient", "f8"),
         ("Corr. Closeness x Degree", "f8"),
         ("Topology Class", "U12"),
-        ("Generator Tool", "U5")
+        ("from", "U5")
     ])
-    for i, f in enumerate(graph_paths):
+    for i in tqdm(range(len(graph_paths))):
+        f = graph_paths[i]
         diG = nx.read_gpickle(str(f))
         G = diG.to_undirected()
         n_nodes = G.number_of_nodes()
@@ -73,35 +128,55 @@ def get_stats(path, path_stats):
         top_class = "Ladder" if max_degree_norm < 0.4 and avg_degree < 3 else "Star or H&S"
         if top_class == "Star or H&S":
             star_hs.append("Star" if R < 0.25 else "H&S")
-
+        if split_by_class:
+            if top_class == "Ladder":
+                os.rename(f, ladder_dir.joinpath(f.name))
+            elif star_hs[-1] == "Star":
+                os.rename(f, star_dir.joinpath(f.name))
+            else:
+                os.rename(f, hs_dir.joinpath(f.name))
         data_stats[i] = (n_nodes, avg_degree, max_degree, max_degree_norm, R, assortativity, cov, top_class, G.graph["from"])
     df_stats = pd.DataFrame(data_stats)
 
-    save_figs(df_stats, [
-        ( "Number of Nodes", "Average Degree", path_stats.joinpath("avg_degree_{}.pdf".format(path.name)) ),
-        ( "Average Degree", "Assortativity Coefficient", path_stats.joinpath("assortativity_{}.pdf".format(path.name)) ),
-        ( "Number of Nodes", "Corr. Closeness x Degree", path_stats.joinpath("coor_{}.pdf".format(path.name)) )
-    ])
+    # save_figs(df_stats, [
+    #     ( "Number of Nodes", "Average Degree",  path_stats.joinpath("avg_degree_{}.{}".format(path.name, imext)) ),
+    #     ( "Average Degree", "Assortativity Coefficient", path_stats.joinpath("assortativity_{}.{}".format(path.name, imext)) ),
+    #     ( "Number of Nodes", "Corr. Closeness x Degree", path_stats.joinpath("coor_{}.{}".format(path.name, imext)) )
+    # ])
 
     save_figs(df_stats, [
-        ( "Average Degree", "Normalized Maximum Degree", path_stats.joinpath("norm_avg_{}.pdf".format(path.name)) ),
-    ])
+        ( "Average Degree", "Normalized Maximum Degree", path_stats.joinpath("norm_avg_{}.{}".format(path.name, imext)) )
+    ], limits=[3, .4])
 
-    non_ladder = df_stats.loc[df_stats["Topology Class"] == "Star or H&S"]
+    non_ladder = df_stats.loc[df_stats["Topology Class"] == "Star or H&S"].copy()
     non_ladder.loc[:, "Topology Class"] = np.array(star_hs, dtype="U12")
     if not non_ladder.empty:
         save_figs(non_ladder, [
-            ( "High-Degree Ratio", "Maximum Degree", path_stats.joinpath("r_{}.pdf".format(path.name)) )
-        ])
+            ( "High-Degree Ratio", "Maximum Degree", path_stats.joinpath("r_{}.{}".format(path.name, imext)) )
+        ], limits=[.25, None])
     print("Done.")
 
 def clean_dir(path):
     path= Path(path)
+    ladder_dir = path.joinpath("Ladder/")
+    star_dir = path.joinpath("Star/")
+    hs_dir = path.joinpath("H&S/")
+    for d in [ladder_dir, star_dir, hs_dir]:
+        if os.path.isdir(d):
+            for p in list(d.glob("*.gpickle")):
+                os.rename(p, path.joinpath(p.name))
     for p in list(path.glob("*.gpickle")):
         os.remove(p)
 
 def get_last(path):
-    path= Path(path)
+    path = Path(path)
+    ladder_dir = path.joinpath("Ladder/")
+    star_dir = path.joinpath("Star/")
+    hs_dir = path.joinpath("H&S/")
+    for d in [ladder_dir, star_dir, hs_dir]:
+        if os.path.isdir(d):
+            for p in d.glob("*.gpickle"):
+                os.rename(p, path.joinpath(p.name))
     sorted_list = sorted(path.glob("*.gpickle"), key=lambda x: int(x.stem))
     if sorted_list:
         return int(sorted_list[-1].stem) + 1
@@ -118,7 +193,11 @@ if __name__ == "__main__":
     p.add_argument("--placement-interval", type=interval, default=(1,1), help="Interval for node placement parameter")
     p.add_argument("--test", action="store_true", help="Save data for test")
     p.add_argument("--generalization", action="store_true", help="Save data for test in the generalization directory")
+    p.add_argument("--split-by-class", action="store_true",
+                   help="Split dataset in  different directories, one for each topology class (Ladder, Star and H&S)")
     p.add_argument("--overwrite", action="store_true", help="Append to a dataset already existent")
+    p.add_argument("--only-stats", action="store_true", help="Create statstics from a given dataset")
+    p.add_argument("--imext", type=str, default="pdf", choices=["pdf", "jpg", "png", "svg"], help="Image extension for statstics")
     args = p.parse_args()
 
     if args.test:
@@ -145,15 +224,16 @@ if __name__ == "__main__":
             offset = get_last(path)
     path_stats = os.path.join(args.path, "stats")
 
-    if args.type == "zoo":
-        try:
-            assert os.path.isdir(args.raw_zoo_dir)
-        except AssertionError:
-            print("Path {} is not a valid diretory.".format(args.raw_zoo_dir))
-            exit(1)
-        print("For zoo, parameter 'size' will be ignored")
-        pt.create_static_zoo_dataset(os.path.abspath(path), os.path.abspath(args.raw_zoo_dir), args.n_interval, offset=offset)
-    else:
-        pt.create_static_brite_dataset(os.path.abspath(path), args.size, args.n_interval,
-                                       args.m_interval, args.placement_interval, offset=offset)
-    get_stats(path, path_stats)
+    if not args.only_stats:
+        if args.type == "zoo":
+            try:
+                assert os.path.isdir(args.raw_zoo_dir)
+            except AssertionError:
+                print("Path {} is not a valid diretory.".format(args.raw_zoo_dir))
+                exit(1)
+            print("For zoo, parameter 'size' will be ignored")
+            pt.create_static_zoo_dataset(os.path.abspath(path), os.path.abspath(args.raw_zoo_dir), args.n_interval, offset=offset)
+        else:
+            pt.create_static_brite_dataset(os.path.abspath(path), args.size, args.n_interval,
+                                           args.m_interval, args.placement_interval, offset=offset)
+    get_stats(path, path_stats, args.imext, args.split_by_class)

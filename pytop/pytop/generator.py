@@ -15,6 +15,7 @@ def batch_files_generator(graphdir, n_batch, shuffle=False,
                           target_fields=None, global_field=None):
     graphdir = Path(graphdir)
     graph_files = list(sorted(graphdir.glob("*.gpickle"), key=lambda x: int(x.stem)))
+    n_batch = len(graph_files) if n_batch < 0 else n_batch
     if shuffle:
         np.random.shuffle(graph_files)
     slices = [slice(start, start + n_batch) for start in range(0, len(graph_files), n_batch)]
@@ -106,7 +107,7 @@ def batch_brite_generator(n_batch, interval_node,
                           input_fields=None, target_fields=None, global_field=None):
     min_n, max_n = interval_node
     min_m, max_m = interval_m
-    min_plcement, max_plcement = interval_placement
+    min_placement, max_placement = interval_placement
     random_state = random_state if random_state else np.random.RandomState()
     while True:
         input_batch = []
