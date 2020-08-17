@@ -1,14 +1,13 @@
-# Pybrite
+# Pytop
+                   [](https://github.com/caiodadauto/pytop/blob/master/graphs.png)
 
-
-----------------
-
-## What is it?
-**Pybrite** is a Python interface to the *Boston University Representative Internet Topology Generator (BRITE)*; this interface
-intend to create a batch generator of *N* topologies, which is easily integrate with a graph deep learning models written in Python.
+**Pytop** is a Python package to generate topologies based on the *Boston University Representative Internet Topology Generator (BRITE)* and the dataset
+[Topology Zoo](http://www.topology-zoo.org/). This interface
+intend to create batches generator of topologies to be inputed in a deep learning model for graphs.
 
 ## Installation
-Clone project, go to the `pybrite` directory and make
+
+Clone project, go to the `pytop` directory and make
 ```
 pip install --user .
 ```
@@ -16,16 +15,19 @@ The `pip` will compile the *BRITE* and move the binary to the `$HOME/.local/bin`
 environment variable.
 
 ## Usage
-Basically, `pybrite` translate the topologies created by *BRITE* to the undirected graph structure defined by `graph_tool` package.
-All graphs delivery by `pybrite` have two associated properties, one for vertices (called *pos*, which is the position) and
-other for edges (called *weight*, which is the distance between vertices). The usage example is presented in
-this [jupyter notebook](https://github.com/caiodadauto/pybrite/blob/master/Usage.ipynb).
+
+Basically, `pytop` translates the topologies created by *BRITE* and available in Topology Zoo.
+All graphs delivery by `pytop` have two associated properties, one for vertices (called *pos*, which is the position) and
+other for edges (called *weight*, which is the euclidean distance between vertices). The usage example is presented in
+this [jupyter notebook](https://github.com/caiodadauto/pytop/blob/master/Usage.ipynb).
 
 ## Credits
-The core of the `pybrite` was implemented by *Alberto Medina* and *Anukool Lakhina* from *Boston University*. The original documentation
+
+The core of the `pytop` was implemented by *Alberto Medina* and *Anukool Lakhina* from *Boston University*. The original documentation
 for this project can be found [here](https://www.cs.bu.edu/brite/index.html).
 
 ## Licence
+
 The core follow copyright from *Boston University*, which can be read below
 
 >                  Copyright 2001, Trustees of Boston University.
