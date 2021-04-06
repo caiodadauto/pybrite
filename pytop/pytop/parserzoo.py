@@ -70,7 +70,7 @@ def ignore_multigraph(path):
 
 
 def solve_duplicated_nodes(G):
-    pos = np.array(list(dict(G.node(data="pos")).values()))
+    pos = np.array(list(dict(G.nodes(data="pos")).values()))
     for v, vp in enumerate(pos):
         for u, up in zip(range(v + 1, len(pos)), pos[v + 1:]):
             if np.all(vp == up):

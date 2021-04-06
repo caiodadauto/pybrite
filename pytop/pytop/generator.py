@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import numpy as np
@@ -10,47 +9,81 @@ from .parserbrite import get_brite_graph
 from .utils import add_shortest_path, graph_to_input_target
 
 
-def batch_files_generator(graphdir, n_batch, shuffle=False,
-                          bidim_solution=True, input_fields=None,
-                          target_fields=None, global_field=None):
+def batch_files_generator(
+    graphdir,
+    n_batch,
+    shuffle=False,
+    edge_scaler=None,
+    bidim_solution=True,
+    input_fields=None,
+    target_fields=None,
+    global_field=None,
+):
     graphdir = Path(graphdir)
     graph_files = list(sorted(graphdir.glob("*.gpickle"), key=lambda x: int(x.stem)))
-    n_batch = len(graph_files) if n_batch < 0 else n_batch
+    n_files = len(graph_files)
     if shuffle:
         np.random.shuffle(graph_files)
-    slices = [slice(start, start + n_batch) for start in range(0, len(graph_files), n_batch)]
-    rest = len(graph_files) % n_batch
-    if rest != 0:
-        if rest / n_batch > .4:
-            slices.append(slice(slices[-1].stop, len(graph_files)))
-        else:
-            slices[-1] = slice(slices[-1].start, len(graph_files))
-    for batch_slice in slices:
-        batch_files = graph_files[batch_slice]
-        input_batch, target_batch, pos_batch = read_from_files(batch_files, bidim_solution, input_fields, target_fields, global_field)
-        yield input_batch, target_batch, pos_batch
+    if n_batch > 0:
+        slices = np.arange(0, n_files, n_batch)
+        slices[-1] = n_files
+    else:
+        slices = np.array([0, n_files])
+    for i in range(1, len(slices)):
+        batch_files = graph_files[slices[i - 1] : slices[i]]
+        input_batch, target_batch, raw_input_edge_features, pos_batch = read_from_files(
+            batch_files,
+            edge_scaler,
+            bidim_solution,
+            input_fields,
+            target_fields,
+            global_field,
+        )
+        yield input_batch, target_batch, raw_input_edge_features, pos_batch
 
-def read_from_files(files, bidim_solution=True, input_fields=None, target_fields=None, global_field=None):
+
+def read_from_files(
+    files,
+    edge_scaler=None,
+    bidim_solution=True,
+    input_fields=None,
+    target_fields=None,
+    global_field=None,
+):
     input_batch = []
     target_batch = []
     pos_batch = []
     for f in files:
         digraph = nx.read_gpickle(f)
-        input_graph, target_graph = graph_to_input_target(
-            digraph, bidim_solution=bidim_solution, input_fields=input_fields,
-            target_fields=target_fields, global_field=global_field)
-        pos = digraph.node(data="pos")
+        input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
+            digraph,
+            edge_scaler=edge_scaler,
+            input_fields=input_fields,
+            target_fields=target_fields,
+            global_field=global_field,
+            bidim_solution=bidim_solution,
+        )
+        pos = digraph.nodes(data="pos")
         input_batch.append(input_graph)
         target_batch.append(target_graph)
         pos_batch.append(pos)
-    return input_batch, target_batch, pos_batch
+    return input_batch, target_batch, raw_input_edge_features, pos_batch
 
-def create_brite_graph(n, m, node_placement, random_state):
+
+def create_brite_graph(
+    min_n, min_m, min_placement, max_n, max_m, max_placement, random_state
+):
+    n = random_state.choice(range(min_n, max_n + 1))
+    m = random_state.choice(range(min_m, max_m + 1))
+    node_placement = random_state.choice(range(min_placement, max_placement + 1))
     graph = get_brite_graph(n, m, node_placement, random_state=random_state)
     digraph = add_shortest_path(graph, random_state=random_state)
     return digraph
 
-def create_static_zoo_dataset(graphdir, gmldir, interval_node, random_state=None, offset=0):
+
+def create_static_zoo_dataset(
+    graphdir, gmldir, interval_node, random_state=None, offset=0
+):
     # graphs = []
     name = 0
     graphdir = Path(graphdir)
@@ -58,12 +91,14 @@ def create_static_zoo_dataset(graphdir, gmldir, interval_node, random_state=None
     min_n, max_n = interval_node
     range_nodes = list(range(min_n, max_n + 1))
     random_state = random_state if random_state else np.random.RandomState()
-    gml_list = list(gmldir.glob('*.gml'))
+    gml_list = list(gmldir.glob("*.gml"))
     for i in tqdm(range(len(gml_list))):
         G = get_zoo_graph(gml_list[i], range_nodes, random_state=random_state)
         if G:
             digraph = add_shortest_path(G, random_state=random_state)
-            nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(name + offset)))
+            nx.write_gpickle(
+                digraph, graphdir.joinpath("{:d}.gpickle".format(name + offset))
+            )
             name += 1
 
             # graphs.append((G, gml_list[i].stem))
@@ -84,27 +119,91 @@ def create_static_zoo_dataset(graphdir, gmldir, interval_node, random_state=None
     #         plt.close()
     # draw_graphs(graphs)
 
-def create_static_brite_dataset(graphdir, n_graphs, interval_node, interval_m=(2, 2), interval_placement=(1, 1), random_state=None, offset=0):
+
+def get_topology_class(digraph):
+    g = digraph.to_undirected()
+    n_nodes = g.number_of_nodes()
+    n_edges = g.number_of_edges()
+    degree = np.array(list(dict(nx.degree(g)).values()))
+    avg_degree = 2 * n_edges / n_nodes
+    max_degree = degree.max()
+    max_degree_norm = max_degree / n_nodes
+    r = (degree > avg_degree).sum() / n_nodes
+    top_class = "ladder" if max_degree_norm < 0.4 and avg_degree < 3 else "star or hs"
+    if top_class == "star or hs":
+        top_class = "star" if r < 0.25 else "hs"
+    return top_class
+
+
+def create_static_brite_dataset(
+    graphdir,
+    n_graphs,
+    interval_node,
+    interval_m=(2, 2),
+    interval_placement=(1, 1),
+    random_state=None,
+    offset=0,
+    balanced=True,
+):
     graphdir = Path(graphdir)
     min_n, max_n = interval_node
     min_m, max_m = interval_m
     min_placement, max_placement = interval_placement
     random_state = random_state if random_state else np.random.RandomState()
-    for i in tqdm(range(n_graphs)):
-        n = random_state.choice(range(min_n, max_n + 1))
-        m = random_state.choice(range(min_m, max_m + 1))
-        node_placement = random_state.choice(range(min_placement, max_placement + 1))
-        digraph = create_brite_graph(n, m, node_placement, random_state)
-        nx.write_gpickle(digraph, graphdir.joinpath("{:d}.gpickle".format(i + offset)))
+    classes = ["ladder", "star", "hs"]
+    if balanced:
+        idx = np.floor(np.linspace(0, n_graphs, len(classes) + 1)).astype(int)
+        for i in range(1, idx.size):
+            c = classes[i - 1]
+            print("Get graphs for {} class".format(c))
+            for j in tqdm(range(idx[i - 1], idx[i])):
+                while True:
+                    digraph = create_brite_graph(
+                        min_n,
+                        min_m,
+                        min_placement,
+                        max_n,
+                        max_m,
+                        max_placement,
+                        random_state,
+                    )
+                    if c == get_topology_class(digraph):
+                        nx.write_gpickle(
+                            digraph,
+                            graphdir.joinpath("{:d}.gpickle".format(j + offset)),
+                        )
+                        break
+    else:
+        for i in tqdm(range(n_graphs)):
+            digraph = create_brite_graph(
+                min_n,
+                min_m,
+                min_placement,
+                max_n,
+                max_m,
+                max_placement,
+                random_state,
+            )
+            nx.write_gpickle(
+                digraph, graphdir.joinpath("{:d}.gpickle".format(i + offset))
+            )
     with open(graphdir.joinpath("info.dat"), "w") as f:
         f.write("min,max\n")
         f.write("n,{},{}\n".format(min_n, max_n))
         f.write("m,{},{}".format(min_m, max_m))
 
-def batch_brite_generator(n_batch, interval_node,
-                          interval_m=(2, 2), interval_placement=(1, 1),
-                          random_state=None, bidim_solution=True,
-                          input_fields=None, target_fields=None, global_field=None):
+
+def batch_brite_generator(
+    n_batch,
+    interval_node,
+    interval_m=(2, 2),
+    interval_placement=(1, 1),
+    random_state=None,
+    bidim_solution=True,
+    input_fields=None,
+    target_fields=None,
+    global_field=None,
+):
     min_n, max_n = interval_node
     min_m, max_m = interval_m
     min_placement, max_placement = interval_placement
@@ -114,14 +213,17 @@ def batch_brite_generator(n_batch, interval_node,
         target_batch = []
         pos_batch = []
         for _ in range(n_batch):
-            n = random_state.choice(range(min_n, max_n + 1))
-            m = random_state.choice(range(min_m, max_m + 1))
-            node_placement = random_state.choice(range(min_placement, max_placement + 1))
-            digraph = create_brite_graph(n, m, node_placement, random_state)
-            input_graph, target_graph = graph_to_input_target(
-                digraph, bidim_solution=bidim_solution, input_fields=input_fields,
-                target_fields=target_fields, global_field=global_field)
+            digraph = create_brite_graph(
+                min_n, min_m, min_placement, max_n, max_m, max_placement, random_state
+            )
+            input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
+                digraph,
+                bidim_solution=bidim_solution,
+                input_fields=input_fields,
+                target_fields=target_fields,
+                global_field=global_field,
+            )
             input_batch.append(input_graph)
             target_batch.append(target_graph)
-            pos_batch.append(dict(digraph.node(data="pos")))
-        yield input_batch, target_batch, pos_batch
+            pos_batch.append(dict(digraph.nodes(data="pos")))
+        yield input_batch, target_batch, raw_input_edge_features, pos_batch
