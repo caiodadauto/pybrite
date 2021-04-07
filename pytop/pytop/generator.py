@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import numpy as np
@@ -11,7 +12,9 @@ from .utils import add_shortest_path, graph_to_input_target
 
 def batch_files_generator(
     graphdir,
+    file_ext,
     n_batch,
+    dataset_size=None,
     shuffle=False,
     edge_scaler=None,
     bidim_solution=True,
@@ -20,19 +23,28 @@ def batch_files_generator(
     global_field=None,
 ):
     graphdir = Path(graphdir)
-    graph_files = list(sorted(graphdir.glob("*.gpickle"), key=lambda x: int(x.stem)))
-    n_files = len(graph_files)
+    if dataset_size is None:
+        dataset_size = len(
+            [
+                f
+                for f in os.listdir(str(graphdir))
+                if os.path.splitext(f)[1] == "." + file_ext
+            ]
+        )
+    suffix = np.arange(0, dataset_size, 1)
     if shuffle:
-        np.random.shuffle(graph_files)
+        np.random.shuffle(suffix)
     if n_batch > 0:
-        slices = np.arange(0, n_files, n_batch)
-        slices[-1] = n_files
+        slices = np.arange(0, dataset_size, n_batch)
+        slices[-1] = dataset_size
     else:
-        slices = np.array([0, n_files])
+        slices = np.array([0, dataset_size])
     for i in range(1, len(slices)):
-        batch_files = graph_files[slices[i - 1] : slices[i]]
+        batch_suffix = suffix[slices[i - 1] : slices[i]]
         input_batch, target_batch, raw_input_edge_features, pos_batch = read_from_files(
-            batch_files,
+            graphdir,
+            file_ext,
+            batch_suffix,
             edge_scaler,
             bidim_solution,
             input_fields,
@@ -43,7 +55,9 @@ def batch_files_generator(
 
 
 def read_from_files(
-    files,
+    graphdir,
+    file_ext,
+    batch_suffix,
     edge_scaler=None,
     bidim_solution=True,
     input_fields=None,
@@ -53,8 +67,8 @@ def read_from_files(
     input_batch = []
     target_batch = []
     pos_batch = []
-    for f in files:
-        digraph = nx.read_gpickle(f)
+    for s in batch_suffix:
+        digraph = nx.read_gpickle(str(graphdir.joinpath(str(s) + "." + file_ext)))
         input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
             digraph,
             edge_scaler=edge_scaler,
