@@ -6,7 +6,7 @@ import networkx as nx
 
 from tqdm import tqdm
 from .parserzoo import get_zoo_graph
-from .parserbrite import get_brite_graph
+from .parserbrite import create_brite_graph
 from .utils import add_shortest_path, graph_to_input_target
 
 
@@ -84,17 +84,6 @@ def read_from_files(
     return input_batch, target_batch, raw_input_edge_features, pos_batch
 
 
-def create_brite_graph(
-    min_n, min_m, min_placement, max_n, max_m, max_placement, random_state
-):
-    n = random_state.choice(range(min_n, max_n + 1))
-    m = random_state.choice(range(min_m, max_m + 1))
-    node_placement = random_state.choice(range(min_placement, max_placement + 1))
-    graph = get_brite_graph(n, m, node_placement, random_state=random_state)
-    digraph = add_shortest_path(graph, random_state=random_state)
-    return digraph
-
-
 def create_static_zoo_dataset(
     graphdir, gmldir, interval_node, random_state=None, offset=0
 ):
@@ -153,49 +142,61 @@ def create_static_brite_dataset(
     graphdir,
     n_graphs,
     interval_node,
-    interval_m=(2, 2),
-    interval_placement=(1, 1),
+    interval_composition,
+    main_plane_size=1000,
     random_state=None,
     offset=0,
     balanced=True,
 ):
     graphdir = Path(graphdir)
-    min_n, max_n = interval_node
-    min_m, max_m = interval_m
-    min_placement, max_placement = interval_placement
+    classes = ["hs", "ladder", "star"]
     random_state = random_state if random_state else np.random.RandomState()
-    classes = ["ladder", "star", "hs"]
+    main_bar = tqdm(total=n_graphs, desc="Generting graphs")
     if balanced:
+        bars = {}
         idx = np.floor(np.linspace(0, n_graphs, len(classes) + 1)).astype(int)
-        for i in range(1, idx.size):
-            c = classes[i - 1]
-            print("Get graphs for {} class".format(c))
-            for j in tqdm(range(idx[i - 1], idx[i])):
-                while True:
-                    digraph = create_brite_graph(
-                        min_n,
-                        min_m,
-                        min_placement,
-                        max_n,
-                        max_m,
-                        max_placement,
-                        random_state,
+        n_graphs_per_class = dict(zip(classes, np.diff(idx)))
+        for i in range(len(classes)):
+            bars[classes[i]] = tqdm(
+                total=n_graphs_per_class[classes[i]],
+                desc="Getting {}".format(classes[i]),
+            )
+
+        total_top = 0
+        iter_classes = iter(classes)
+        top_class = next(iter_classes)
+        got_top = dict(zip(classes, len(classes) * [0]))
+        main_bar.set_postfix(c=top_class)
+        while total_top < n_graphs:
+            valid_graph = False
+            while not valid_graph:
+                digraph = create_brite_graph(
+                    interval_node,
+                    interval_composition,
+                    main_plane_size,
+                    random_state,
+                    top_class,
+                )
+                c = get_topology_class(digraph)
+                if got_top[c] < n_graphs_per_class[c]:
+                    nx.write_gpickle(
+                        digraph,
+                        graphdir.joinpath("{:d}.gpickle".format(total_top + offset)),
                     )
-                    if c == get_topology_class(digraph):
-                        nx.write_gpickle(
-                            digraph,
-                            graphdir.joinpath("{:d}.gpickle".format(j + offset)),
-                        )
-                        break
+                    total_top += 1
+                    got_top[c] += 1
+                    bars[c].update()
+                    main_bar.update()
+                    valid_graph = True
+                elif c == top_class:
+                    top_class = next(iter_classes)
+                    main_bar.set_postfix(c=top_class)
     else:
         for i in tqdm(range(n_graphs)):
             digraph = create_brite_graph(
-                min_n,
-                min_m,
-                min_placement,
-                max_n,
-                max_m,
-                max_placement,
+                interval_node,
+                interval_composition,
+                main_plane_size,
                 random_state,
             )
             nx.write_gpickle(
@@ -203,24 +204,24 @@ def create_static_brite_dataset(
             )
     with open(graphdir.joinpath("info.dat"), "w") as f:
         f.write("min,max\n")
-        f.write("n,{},{}\n".format(min_n, max_n))
-        f.write("m,{},{}".format(min_m, max_m))
+        f.write("n,{},{}\n".format(interval_node[0], interval_node[1]))
+        f.write(
+            "composition,{},{}".format(interval_composition[0], interval_composition[1])
+        )
 
 
 def batch_brite_generator(
     n_batch,
     interval_node,
-    interval_m=(2, 2),
-    interval_placement=(1, 1),
+    interval_composition,
+    main_plane_size=1000,
     random_state=None,
     bidim_solution=True,
     input_fields=None,
     target_fields=None,
     global_field=None,
+    top_class=None,
 ):
-    min_n, max_n = interval_node
-    min_m, max_m = interval_m
-    min_placement, max_placement = interval_placement
     random_state = random_state if random_state else np.random.RandomState()
     while True:
         input_batch = []
@@ -228,7 +229,11 @@ def batch_brite_generator(
         pos_batch = []
         for _ in range(n_batch):
             digraph = create_brite_graph(
-                min_n, min_m, min_placement, max_n, max_m, max_placement, random_state
+                interval_node,
+                interval_composition,
+                main_plane_size,
+                random_state,
+                top_class,
             )
             input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
                 digraph,

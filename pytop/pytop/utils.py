@@ -18,15 +18,15 @@ def ensure_connection(graph):
 
 
 def ip_generator(size, random_state=None):
-    zero_ip = np.zeros(32)
-    ip_set = np.array([zero_ip] * size)
+    base_ip = random_state.choice([0, 1], size=32)
+    ip_set = np.array([base_ip] * size)
     random_state = random_state if random_state else np.random.RandomState()
     for i in range(size):
-        ip = zero_ip
+        ip = base_ip.copy()
         while np.any([np.all(ip_bool) for ip_bool in ip_set == ip]):
-            ip = random_state.choice([0, 1], size=32)
+            ip[-8:] = random_state.choice([0, 1], size=8)
         ip_set[i] = ip
-        yield np.array(ip, dtype=float)
+        yield ip.astype(float)
 
 
 def pairwise(iterable):

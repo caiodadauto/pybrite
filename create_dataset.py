@@ -314,20 +314,26 @@ if __name__ == "__main__":
     p.add_argument(
         "--n-interval",
         type=interval,
-        default=(8, 20),
-        help="Interval for number of nodes",
+        default=(24, 36),
+        help="Interval for number of nodes.",
     )
     p.add_argument(
-        "--m-interval",
+        "--composition-interval",
         type=interval,
-        default=(1, 3),
-        help="Interval for connectivity degree",
+        default=(1, 4),
+        help="Interval for the number of compositions used to create the final graph",
     )
+    # p.add_argument(
+    #     "--max-m",
+    #     type=interval,
+    #     default=4,
+    #     help="The maximum number of edges to be added for each new nodes.",
+    # )
     p.add_argument(
-        "--placement-interval",
-        type=interval,
-        default=(1, 2),
-        help="Interval for node placement parameter",
+        "--plane-size",
+        type=int,
+        default=1200,
+        help="The plane size where the nodes and edges will be added",
     )
     p.add_argument("--test", action="store_true", help="Save data for test")
     p.add_argument(
@@ -357,6 +363,13 @@ if __name__ == "__main__":
         " topologies for each class",
     )
     args = p.parse_args()
+
+    ratio = args.n_interval[0] // args.composition_interval[1]
+    if ratio < 6:
+        raise ValueError(
+            "The minumum value riquered for number of nodes"
+            " is equal to the maximum number of compositions times 6."
+        )
 
     if args.test:
         if args.generalization:
@@ -412,8 +425,8 @@ if __name__ == "__main__":
                 os.path.abspath(all_path),
                 args.size,
                 args.n_interval,
-                args.m_interval,
-                args.placement_interval,
+                args.composition_interval,
+                args.plane_size,
                 offset=offset,
                 balanced=False if args.non_balanced else True,
             )
