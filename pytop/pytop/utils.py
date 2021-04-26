@@ -6,14 +6,15 @@ import networkx as nx
 
 def ensure_connection(graph):
     max_n_node = 0
-    components = list(nx.connected_component_subgraphs(graph))
+    components = list(nx.connected_components(graph))
     for i in range(len(components)):
-        size = components[i].number_of_nodes()
+        subgraph = graph.subgraph(components[i])
+        size = subgraph.number_of_nodes()
         if max_n_node < size:
             max_n_node = size
             max_idx = i
     if len(components) > 0:
-        largest_component = components[max_idx]
+        largest_component = graph.subgraph(components[max_idx]).copy()
     return largest_component
 
 

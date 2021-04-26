@@ -39,13 +39,25 @@ def save_figs(data, params, limits=None):
             hue="from",
             ax=ax,
             legend="full",
-            zorder=10,
+            zorder=1,
             sizes=[50],
             markers=["o"],
             palette="Set1",
         )
-        # sns.scatterplot(x=x, y=y, data=data, style="from", size="from", hue="from",
-        #                 ax=ax, legend="full", zorder=10, sizes=[50, 80], markers=["o", "^"], palette="Set1")
+        # sns.scatterplot(
+        #     x=x,
+        #     y=y,
+        #     data=data,
+        #     style="from",
+        #     size="from",
+        #     hue="from",
+        #     ax=ax,
+        #     legend="full",
+        #     zorder=1,
+        #     sizes=[50, 80],
+        #     markers=["o", "^"],
+        #     palette="Set1",
+        # )
         ax.set_xlabel(x, fontsize=18)
         ax.set_ylabel(y, fontsize=18)
         classes = data["Topology Class"].unique().tolist()
@@ -66,6 +78,7 @@ def save_figs(data, params, limits=None):
                         fc=(1, 1, 1, 0),
                         hatch="//",
                         label="Ladder",
+                        alpha=0.55,
                     )
                 )
                 handles, labels = ax.get_legend_handles_labels()
@@ -84,7 +97,10 @@ def save_figs(data, params, limits=None):
                 # _ = handles.pop(labels.index("from"))
                 # labels.remove("from")
                 ax.legend(
-                    handles=handles, loc="lower right", labels=labels, prop={"size": 14}
+                    handles=handles,
+                    loc="lower right",
+                    labels=labels,
+                    prop={"size": 14},
                 )
                 ax.axvline(x=x, color="k", lw=1)
                 ax.annotate(
@@ -131,7 +147,7 @@ def save_figs(data, params, limits=None):
                     mec="k",
                     mew=1.2,
                     ls="",
-                    zorder=10,
+                    zorder=20,
                 )
                 ax.plot(
                     [x],
@@ -142,7 +158,7 @@ def save_figs(data, params, limits=None):
                     mec="k",
                     mew=1.2,
                     ls="",
-                    zorder=10,
+                    zorder=20,
                 )
         else:
             handles, labels = ax.get_legend_handles_labels()
@@ -218,12 +234,21 @@ def get_stats(path, path_stats, imext):
             num_hs += 1
         else:
             exit(1)
-        if top_class == "Ladder":
-            os.symlink(f, ladder_dir.joinpath(f.name))
-        elif star_hs[-1] == "Star":
-            os.symlink(f, star_dir.joinpath(f.name))
-        else:
-            os.symlink(f, hs_dir.joinpath(f.name))
+        # if top_class == "Ladder":
+        #     try:
+        #         os.symlink(f, ladder_dir.joinpath(f.name))
+        #     except FileExistsError:
+        #         pass
+        # elif star_hs[-1] == "Star":
+        #     try:
+        #         os.symlink(f, star_dir.joinpath(f.name))
+        #     except FileExistsError:
+        #         pass
+        # else:
+        #     try:
+        #         os.symlink(f, hs_dir.joinpath(f.name))
+        #     except FileExistsError:
+        #         pass
 
         data_stats[i] = (
             n_nodes,
@@ -314,7 +339,7 @@ if __name__ == "__main__":
     p.add_argument(
         "--n-interval",
         type=interval,
-        default=(24, 36),
+        default=(25, 55),
         help="Interval for number of nodes.",
     )
     p.add_argument(
@@ -375,9 +400,10 @@ if __name__ == "__main__":
         if args.generalization:
             path = os.path.join(args.path, "test_generalization")
         else:
-            path = os.path.join(args.path, "test_non_generalization/")
+            path = os.path.join(args.path, "test_non_generalization")
     else:
-        path = os.path.join(args.path, "train/")
+        path = os.path.join(args.path, "train")
+    # path = os.path.join(args.path, "data_to_plot")
     all_path = os.path.join(path, "All")
     path_stats = os.path.join(args.path, "stats")
     os.makedirs(path_stats, exist_ok=True)

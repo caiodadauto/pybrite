@@ -175,9 +175,11 @@ def verify(G, path):
 def get_zoo_graph(path, range_nodes, random_state=None):
     path = Path(path)
     G = ignore_multigraph(path)
+    G = ensure_connection(G)
     if not G.number_of_nodes() in range_nodes:
         return None
-    G = ensure_connection(G)
+    if G.number_of_nodes() > 255:
+        return None
     add_attr(G, random_state, path)
     solve_duplicated_nodes(G)
     G.graph["from"] = "Zoo"

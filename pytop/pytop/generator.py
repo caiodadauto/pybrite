@@ -21,7 +21,9 @@ def batch_files_generator(
     input_fields=None,
     target_fields=None,
     global_field=None,
+    random_state=None,
 ):
+    random_state = np.random.RandomState() if random_state is None else random_state
     graphdir = Path(graphdir)
     if dataset_size is None:
         dataset_size = len(
@@ -33,7 +35,7 @@ def batch_files_generator(
         )
     suffix = np.arange(0, dataset_size, 1)
     if shuffle:
-        np.random.shuffle(suffix)
+        random_state.shuffle(suffix)
     if n_batch > 0:
         slices = np.arange(0, dataset_size, n_batch)
         slices[-1] = dataset_size
@@ -89,8 +91,8 @@ def create_static_zoo_dataset(
 ):
     # graphs = []
     name = 0
-    graphdir = Path(graphdir)
     gmldir = Path(gmldir)
+    graphdir = Path(graphdir)
     min_n, max_n = interval_node
     range_nodes = list(range(min_n, max_n + 1))
     random_state = random_state if random_state else np.random.RandomState()
@@ -103,13 +105,12 @@ def create_static_zoo_dataset(
                 digraph, graphdir.joinpath("{:d}.gpickle".format(name + offset))
             )
             name += 1
-
             # graphs.append((G, gml_list[i].stem))
-
+    # print(name, len(gml_list))
+    # print(name / len(gml_list))
     with open(graphdir.joinpath("info.dat"), "w") as f:
         f.write("min,max\n")
         f.write("n,{},{}\n".format(min_n, max_n))
-
     # def draw_graphs(graphs):
     #     import matplotlib.pyplot as plt
     #     i = 0
