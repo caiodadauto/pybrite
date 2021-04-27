@@ -9,7 +9,11 @@ if sys.version_info >= (3, 8):
     from networkx import read_gpickle
 else:
     print("I am old")
-    from pickle5 import load as read_gpickle
+    from pickle5 import load
+    def read_gpickle(path):
+        with open(path, 'rb') as f:
+            g = load(f)
+        return g
 
 from tqdm import tqdm
 from .parserzoo import get_zoo_graph
