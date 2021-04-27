@@ -1,8 +1,15 @@
 import os
+import sys
 from pathlib import Path
 
 import numpy as np
 import networkx as nx
+if sys.version_info >= (3, 8):
+    print("I am 3.8 >=")
+    from networkx import read_gpickle
+else:
+    print("I am old")
+    from pickle5 import load as read_gpickle
 
 from tqdm import tqdm
 from .parserzoo import get_zoo_graph
@@ -70,7 +77,7 @@ def read_from_files(
     target_batch = []
     pos_batch = []
     for s in batch_suffix:
-        digraph = nx.read_gpickle(str(graphdir.joinpath(str(s) + "." + file_ext)))
+        digraph = read_gpickle(str(graphdir.joinpath(str(s) + "." + file_ext)))
         input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
             digraph,
             edge_scaler=edge_scaler,
