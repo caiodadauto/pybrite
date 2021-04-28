@@ -5,10 +5,8 @@ from pathlib import Path
 import numpy as np
 import networkx as nx
 if sys.version_info >= (3, 8):
-    print("I am 3.8 >=")
     from networkx import read_gpickle
 else:
-    print("I am old")
     from pickle5 import load
     def read_gpickle(path):
         with open(path, 'rb') as f:
@@ -33,6 +31,7 @@ def batch_files_generator(
     target_fields=None,
     global_field=None,
     random_state=None,
+    start_point=1,
 ):
     random_state = np.random.RandomState() if random_state is None else random_state
     graphdir = Path(graphdir)
@@ -52,7 +51,7 @@ def batch_files_generator(
         slices[-1] = dataset_size
     else:
         slices = np.array([0, dataset_size])
-    for i in range(1, len(slices)):
+    for i in range(start_point, len(slices)):
         batch_suffix = suffix[slices[i - 1] : slices[i]]
         input_batch, target_batch, raw_input_edge_features, pos_batch = read_from_files(
             graphdir,
