@@ -74,7 +74,7 @@ def add_shortest_path(graph, random_state):
 def graph_to_input_target(
     graph,
     dtype=np.float32,
-    edge_scaler=None,
+    scaler=None,
     input_fields=None,
     target_fields=None,
     global_field=None,
@@ -131,8 +131,8 @@ def graph_to_input_target(
     if input_edge_features.ndim == 1:
         input_edge_features = input_edge_features.reshape(-1, 1)
     raw_input_edge_features = input_edge_features.copy()
-    if edge_scaler is not None:
-        input_edge_features = edge_scaler(input_edge_features)
+    if scaler is not None:
+        input_edge_features = scaler(input_edge_features)
     for i, (sender, receiver) in enumerate(graph.edges()):
         input_graph.add_edge(
             sender,
