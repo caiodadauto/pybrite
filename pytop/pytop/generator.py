@@ -8,6 +8,7 @@ if sys.version_info >= (3, 8):
     from networkx import read_gpickle
 else:
     from pickle5 import load
+
     def read_gpickle(path):
         with open(path, 'rb') as f:
             g = load(f)
@@ -31,7 +32,7 @@ def batch_files_generator(
     target_fields=None,
     global_field=None,
     random_state=None,
-    start_point=1,
+    seen_graphs=0,
 ):
     random_state = np.random.RandomState() if random_state is None else random_state
     graphdir = Path(graphdir)
@@ -46,13 +47,16 @@ def batch_files_generator(
     suffix = np.arange(0, dataset_size, 1)
     if shuffle:
         random_state.shuffle(suffix)
+    if seen_graphs > 0:
+        suffix = suffix[seen_graphs + 1:]
+        dataset_size = len(suffix)
     if n_batch > 0:
         slices = np.arange(0, dataset_size, n_batch)
         slices[-1] = dataset_size
     else:
         slices = np.array([0, dataset_size])
-    for i in range(start_point, len(slices)):
-        batch_suffix = suffix[slices[i - 1] : slices[i]]
+    for i in range(1, len(slices)):
+        batch_suffix = suffix[slices[i - 1]: slices[i]]
         input_batch, target_batch, raw_input_edge_features, pos_batch = read_from_files(
             graphdir,
             file_ext,
@@ -112,7 +116,8 @@ def create_static_zoo_dataset(
         if G:
             digraph = add_shortest_path(G, random_state=random_state)
             nx.write_gpickle(
-                digraph, graphdir.joinpath("{:d}.gpickle".format(name + offset))
+                digraph, graphdir.joinpath(
+                    "{:d}.gpickle".format(name + offset))
             )
             name += 1
             # graphs.append((G, gml_list[i].stem))
@@ -192,7 +197,8 @@ def create_static_brite_dataset(
                 if got_top[c] < n_graphs_per_class[c]:
                     nx.write_gpickle(
                         digraph,
-                        graphdir.joinpath("{:d}.gpickle".format(total_top + offset)),
+                        graphdir.joinpath(
+                            "{:d}.gpickle".format(total_top + offset)),
                     )
                     total_top += 1
                     got_top[c] += 1
@@ -217,7 +223,8 @@ def create_static_brite_dataset(
         f.write("min,max\n")
         f.write("n,{},{}\n".format(interval_node[0], interval_node[1]))
         f.write(
-            "composition,{},{}".format(interval_composition[0], interval_composition[1])
+            "composition,{},{}".format(
+                interval_composition[0], interval_composition[1])
         )
 
 
