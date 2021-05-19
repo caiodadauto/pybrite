@@ -26,10 +26,14 @@ def save_figs(data, params, limits=None):
     for x, y, name in params:
         fig = plt.figure(dpi=400)
         ax = fig.subplots(1, 1, sharey=False)
-        min_x = np.floor(data[x].values.min() * 1.05) if data[x].values.min() < 0 else 0
-        min_y = np.floor(data[y].values.min() * 1.05) if data[y].values.min() < 0 else 0
-        max_x = np.ceil(data[x].values.max() * 1.05) if data[x].values.max() > 0 else 0
-        max_y = np.ceil(data[y].values.max() * 1.05) if data[y].values.max() > 0 else 0
+        min_x = np.floor(data[x].values.min() *
+                         1.05) if data[x].values.min() < 0 else 0
+        min_y = np.floor(data[y].values.min() *
+                         1.05) if data[y].values.min() < 0 else 0
+        max_x = np.ceil(data[x].values.max() *
+                        1.05) if data[x].values.max() > 0 else 0
+        max_y = np.ceil(data[y].values.max() *
+                        1.05) if data[y].values.max() > 0 else 0
         sns.scatterplot(
             x=x,
             y=y,
@@ -107,13 +111,15 @@ def save_figs(data, params, limits=None):
                     "",
                     xy=(x * 0.68, y * 0.9),
                     xytext=(x, y * 0.9),
-                    arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color="k"),
+                    arrowprops=dict(arrowstyle="->",
+                                    connectionstyle="arc3", color="k"),
                 )
                 ax.annotate(
                     "",
                     xy=(x, y * 0.10),
                     xytext=(x * 1.32, y * 0.10),
-                    arrowprops=dict(arrowstyle="<-", connectionstyle="arc3", color="k"),
+                    arrowprops=dict(arrowstyle="<-",
+                                    connectionstyle="arc3", color="k"),
                 )
                 plt.text(
                     x * 0.68,
@@ -234,21 +240,24 @@ def get_stats(path, path_stats, imext):
             num_hs += 1
         else:
             exit(1)
-        # if top_class == "Ladder":
-        #     try:
-        #         os.symlink(f, ladder_dir.joinpath(f.name))
-        #     except FileExistsError:
-        #         pass
-        # elif star_hs[-1] == "Star":
-        #     try:
-        #         os.symlink(f, star_dir.joinpath(f.name))
-        #     except FileExistsError:
-        #         pass
-        # else:
-        #     try:
-        #         os.symlink(f, hs_dir.joinpath(f.name))
-        #     except FileExistsError:
-        #         pass
+        if top_class == "Ladder":
+            try:
+                os.symlink(os.path.abspath(f), os.path.abspath(
+                    ladder_dir.joinpath(f.name)))
+            except FileExistsError:
+                pass
+        elif star_hs[-1] == "Star":
+            try:
+                os.symlink(os.path.abspath(f), os.path.abspath(
+                    star_dir.joinpath(f.name)))
+            except FileExistsError:
+                pass
+        else:
+            try:
+                os.symlink(os.path.abspath(f), os.path.abspath(
+                    hs_dir.joinpath(f.name)))
+            except FileExistsError:
+                pass
 
         data_stats[i] = (
             n_nodes,
@@ -276,7 +285,8 @@ def get_stats(path, path_stats, imext):
         limits=[3, 0.4],
     )
 
-    non_ladder = df_stats.loc[df_stats["Topology Class"] == "Star or H&S"].copy()
+    non_ladder = df_stats.loc[df_stats["Topology Class"]
+                              == "Star or H&S"].copy()
     non_ladder.loc[:, "Topology Class"] = np.array(star_hs, dtype="U12")
     if not non_ladder.empty:
         non_ladder.sort_values(by=["from"], inplace=True)
@@ -335,7 +345,8 @@ if __name__ == "__main__":
     p.add_argument(
         "--raw-zoo-dir", type=str, default="zoo/", help="Path to gml topology zoo file"
     )
-    p.add_argument("--path", type=str, default="dataset/", help="Path to save data")
+    p.add_argument("--path", type=str, default="dataset/",
+                   help="Path to save data")
     p.add_argument(
         "--n-interval",
         type=interval,
@@ -414,7 +425,8 @@ if __name__ == "__main__":
             offset = 0
         else:
             if args.overwrite:
-                go = input("The data will be overwrite, do you want to continue? [yN]")
+                go = input(
+                    "The data will be overwrite, do you want to continue? [yN]")
                 if go == "y":
                     clean_dir(path)
                     offset = 0

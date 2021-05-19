@@ -37,14 +37,12 @@ def batch_files_generator(
     random_state = np.random.RandomState() if random_state is None else random_state
     graphdir = Path(graphdir)
     if dataset_size is None:
-        dataset_size = len(
-            [
-                f
-                for f in os.listdir(str(graphdir))
-                if os.path.splitext(f)[1] == "." + file_ext
-            ]
-        )
-    suffix = np.arange(0, dataset_size, 1)
+        suffix = [
+            os.path.splitext(f)[0] for f in os.listdir(
+                str(graphdir)) if os.path.splitext(f)[1] == "." + file_ext
+        ]
+    else:
+        suffix = np.arange(0, dataset_size, 1)
     if shuffle:
         random_state.shuffle(suffix)
     if seen_graphs > 0:
