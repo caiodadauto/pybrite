@@ -77,6 +77,7 @@ def read_from_files(
     input_fields=None,
     target_fields=None,
     global_field=None,
+    dtype=np.float32,
 ):
     input_batch = []
     target_batch = []
@@ -90,6 +91,7 @@ def read_from_files(
             target_fields=target_fields,
             global_field=global_field,
             bidim_solution=bidim_solution,
+            dtype=np.float32,
         )
         pos = digraph.nodes(data="pos")
         input_batch.append(input_graph)
@@ -237,6 +239,7 @@ def batch_brite_generator(
     target_fields=None,
     global_field=None,
     top_class=None,
+    dtype=np.float32,
 ):
     random_state = random_state if random_state else np.random.RandomState()
     while True:
@@ -257,6 +260,7 @@ def batch_brite_generator(
                 input_fields=input_fields,
                 target_fields=target_fields,
                 global_field=global_field,
+                dtype=np.float32,
             )
             input_batch.append(input_graph)
             target_batch.append(target_graph)
