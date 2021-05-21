@@ -33,6 +33,7 @@ def batch_files_generator(
     global_field=None,
     random_state=None,
     seen_graphs=0,
+    dtype=np.float32,
 ):
     random_state = np.random.RandomState() if random_state is None else random_state
     graphdir = Path(graphdir)
@@ -64,6 +65,7 @@ def batch_files_generator(
             input_fields,
             target_fields,
             global_field,
+            dtype=dtype,
         )
         yield input_batch, target_batch, raw_input_edge_features, pos_batch
 
@@ -91,7 +93,7 @@ def read_from_files(
             target_fields=target_fields,
             global_field=global_field,
             bidim_solution=bidim_solution,
-            dtype=np.float32,
+            dtype=dtype,
         )
         pos = digraph.nodes(data="pos")
         input_batch.append(input_graph)
@@ -260,7 +262,7 @@ def batch_brite_generator(
                 input_fields=input_fields,
                 target_fields=target_fields,
                 global_field=global_field,
-                dtype=np.float32,
+                dtype=dtype,
             )
             input_batch.append(input_graph)
             target_batch.append(target_graph)
