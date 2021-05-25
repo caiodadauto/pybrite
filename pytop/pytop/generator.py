@@ -161,6 +161,7 @@ def create_static_brite_dataset(
     n_graphs,
     interval_node,
     interval_composition,
+    class_ratio,
     main_plane_size=1000,
     random_state=None,
     offset=0,
@@ -172,8 +173,10 @@ def create_static_brite_dataset(
     main_bar = tqdm(total=n_graphs, desc="Generting graphs")
     if balanced:
         bars = {}
-        idx = np.floor(np.linspace(0, n_graphs, len(classes) + 1)).astype(int)
-        n_graphs_per_class = dict(zip(classes, np.diff(idx)))
+        n_hs = int(np.ceil(n_graphs * class_ratio[0]))
+        n_l = int(np.ceil(n_graphs * class_ratio[1]))
+        n_s = n_graphs - (n_hs + n_l)
+        n_graphs_per_class = dict(zip(classes, [n_hs, n_l, n_s]))
         for i in range(len(classes)):
             bars[classes[i]] = tqdm(
                 total=n_graphs_per_class[classes[i]],

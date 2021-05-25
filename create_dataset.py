@@ -20,6 +20,12 @@ def interval(s):
     except:
         raise argparse.ArgumentTypeError("Interval must be min,max")
 
+def class_ratio(s):
+    try:
+        h, l = map(float, s.split(","))
+        return h, l
+    except:
+        raise argparse.ArgumentTypeError("Interval must be h,l")
 
 def save_figs(data, params, limits=None):
     sns.set_style("ticks")
@@ -398,6 +404,12 @@ if __name__ == "__main__":
         help="Not require that the dataset will be balanced in the number of"
         " topologies for each class",
     )
+    p.add_argument(
+        "--class-ratio",
+        type=class_ratio,
+        default=(1/3, 1/3),
+        help="Proportion of Ladder and H&S topologies",
+    )
     args = p.parse_args()
 
     ratio = args.n_interval[0] // args.composition_interval[1]
@@ -464,7 +476,8 @@ if __name__ == "__main__":
                 args.size,
                 args.n_interval,
                 args.composition_interval,
-                args.plane_size,
+                class_ratio=args.class_ratio,
+                main_plane_size=args.plane_size,
                 offset=offset,
                 balanced=False if args.non_balanced else True,
             )
