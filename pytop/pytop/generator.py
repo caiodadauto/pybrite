@@ -74,6 +74,7 @@ def read_from_files(
     graphdir,
     file_ext,
     batch_suffix,
+    trunc_ip=False,
     scaler=None,
     bidim_solution=True,
     input_fields=None,
@@ -88,6 +89,7 @@ def read_from_files(
         digraph = read_gpickle(str(graphdir.joinpath(str(s) + "." + file_ext)))
         input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
             digraph,
+            trunc_ip=trunc_ip,
             scaler=scaler,
             input_fields=input_fields,
             target_fields=target_fields,
@@ -237,6 +239,7 @@ def batch_brite_generator(
     n_batch,
     interval_node,
     interval_composition,
+    trunc_ip=False,
     main_plane_size=1000,
     random_state=None,
     bidim_solution=True,
@@ -261,6 +264,7 @@ def batch_brite_generator(
             )
             input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
                 digraph,
+                trunc_ip=trunc_ip,
                 bidim_solution=bidim_solution,
                 input_fields=input_fields,
                 target_fields=target_fields,
