@@ -24,6 +24,7 @@ def batch_files_generator(
     graphdir,
     file_ext,
     n_batch,
+    trunc_ip=False,
     dataset_size=None,
     shuffle=False,
     scaler=None,
@@ -65,6 +66,7 @@ def batch_files_generator(
             input_fields,
             target_fields,
             global_field,
+            trunc_ip=trunc_ip,
             dtype=dtype,
         )
         yield input_batch, target_batch, raw_input_edge_features, pos_batch
@@ -74,12 +76,12 @@ def read_from_files(
     graphdir,
     file_ext,
     batch_suffix,
-    trunc_ip=False,
     scaler=None,
     bidim_solution=True,
     input_fields=None,
     target_fields=None,
     global_field=None,
+    trunc_ip=False,
     dtype=np.float32,
 ):
     input_batch = []

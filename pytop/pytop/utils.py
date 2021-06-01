@@ -91,7 +91,7 @@ def graph_to_input_target(
             fattr = attr[field]
             if trunc_ip and field == "ip":
                 fattr = fattr[-8:]
-            features = np.array(fattr, dtype=dtype)
+            features.append(np.array(fattr, dtype=dtype))
         return np.hstack(features)
 
     input_node_fields = (
