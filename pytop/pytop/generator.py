@@ -25,6 +25,7 @@ def batch_files_generator(
     file_ext,
     n_batch,
     trunc_ip=False,
+    one_hot=False,
     dataset_size=None,
     shuffle=False,
     scaler=None,
@@ -66,6 +67,7 @@ def batch_files_generator(
             input_fields,
             target_fields,
             global_field,
+            one_hot=one_hot,
             trunc_ip=trunc_ip,
             dtype=dtype,
         )
@@ -81,7 +83,9 @@ def read_from_files(
     input_fields=None,
     target_fields=None,
     global_field=None,
+    one_hot=False,
     trunc_ip=False,
+    onehot=False,
     dtype=np.float32,
 ):
     input_batch = []
@@ -92,6 +96,7 @@ def read_from_files(
         input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
             digraph,
             trunc_ip=trunc_ip,
+            onehot=one_hot,
             scaler=scaler,
             input_fields=input_fields,
             target_fields=target_fields,
@@ -241,6 +246,7 @@ def batch_brite_generator(
     n_batch,
     interval_node,
     interval_composition,
+    one_hot=False,
     trunc_ip=False,
     main_plane_size=1000,
     random_state=None,
@@ -267,6 +273,7 @@ def batch_brite_generator(
             input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
                 digraph,
                 trunc_ip=trunc_ip,
+                one_hot=one_hot,
                 bidim_solution=bidim_solution,
                 input_fields=input_fields,
                 target_fields=target_fields,

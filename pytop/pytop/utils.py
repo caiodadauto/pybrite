@@ -75,6 +75,7 @@ def add_shortest_path(graph, random_state):
 
 def graph_to_input_target(
     graph,
+    one_hot=False,
     trunc_ip=False,
     dtype=np.float32,
     scaler=None,
@@ -89,8 +90,14 @@ def graph_to_input_target(
         features = []
         for field in fields:
             fattr = attr[field]
-            if trunc_ip and field == "ip":
-                fattr = fattr[-8:]
+            if field == "ip":
+                if one_hot:
+                    v = np.zeros(256)
+                    i = int("".join(str(b) for b in fattr[-8:]), 2)
+                    v[i] = 1
+                    fattr = v
+                elif trunc_ip:
+                    fattr = fattr[-8:]
             features.append(np.array(fattr, dtype=dtype))
         return np.hstack(features)
 
