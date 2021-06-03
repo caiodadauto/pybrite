@@ -93,7 +93,7 @@ def graph_to_input_target(
             if field == "ip":
                 if one_hot:
                     v = np.zeros(256)
-                    i = int("".join(str(b) for b in fattr[-8:]), 2)
+                    i = int("".join(str(int(b)) for b in fattr[-8:]), 2)
                     v[i] = 1
                     fattr = v
                 elif trunc_ip:

@@ -83,9 +83,8 @@ def read_from_files(
     input_fields=None,
     target_fields=None,
     global_field=None,
-    one_hot=False,
     trunc_ip=False,
-    onehot=False,
+    one_hot=False,
     dtype=np.float32,
 ):
     input_batch = []
@@ -96,7 +95,7 @@ def read_from_files(
         input_graph, target_graph, raw_input_edge_features = graph_to_input_target(
             digraph,
             trunc_ip=trunc_ip,
-            onehot=one_hot,
+            one_hot=one_hot,
             scaler=scaler,
             input_fields=input_fields,
             target_fields=target_fields,
