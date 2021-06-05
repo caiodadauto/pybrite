@@ -19,24 +19,24 @@ def ensure_connection(graph):
 
 
 def add_ip_prefix(G, random_state):
-    idx = {}
+    # idx = {}
     edges = G.edges()
-    degrees = G.degree()
-    node_interfaces = {}
+    # degrees = G.degree()
+    # node_interfaces = {}
     prefixes = get_prefix(G.number_of_edges(), random_state=random_state)
-    for n, d in degrees:
-        idx[n] = 0
-        node_interfaces[n] = np.zeros((d, 32))
+    # for n, d in degrees:
+    #     idx[n] = 0
+    #     node_interfaces[n] = np.zeros((d, 32))
     for i, (p, s) in enumerate(edges):
         G.add_edge(p, s, prefix=prefixes[i])
-        node_interfaces[p][idx[p]] = prefixes[i]
-        node_interfaces[s][idx[s]] = prefixes[i]
-        idx[p] += 1
-        idx[s] += 1
-    node_params = list(
-        map(lambda t: (t[0], dict(interfaces=t[1])), tuple(node_interfaces.items()))
-    )
-    G.add_nodes_from(node_params)
+    #     node_interfaces[p][idx[p]] = prefixes[i]
+    #     node_interfaces[s][idx[s]] = prefixes[i]
+    #     idx[p] += 1
+    #     idx[s] += 1
+    # node_params = list(
+    #     map(lambda t: (t[0], dict(interfaces=t[1])), tuple(node_interfaces.items()))
+    # )
+    # G.add_nodes_from(node_params)
 
 
 def get_prefix(n_subnets, range_subnet_mask=(24, 28), random_state=None):
@@ -107,15 +107,13 @@ def graph_to_input_target(
         features = []
         for field in fields:
             fattr = np.array(attr[field], dtype=dtype)
-            if field == "interfaces":
-                fattr = fattr.T
+            # if field == "interfaces":
+            #     fattr = fattr.T
             features.append(fattr)
         return np.hstack(features)
 
     input_node_fields = (
-        input_fields["node"]
-        if input_fields and "node" in input_fields
-        else ("interfaces",)
+        input_fields["node"] if input_fields and "node" in input_fields else ("pos",)
     )
     input_edge_fields = (
         input_fields["edge"]
@@ -152,9 +150,9 @@ def graph_to_input_target(
     end = _graph.graph["target"]
     for node_index, node_feature in _graph.nodes(data=True):
         if node_index == end:
-            end_node = node_feature[
-                global_field if global_field else "interfaces"
-            ].astype(dtype)
+            end_node = np.array(
+                list(_graph.in_edges(node_index, data="prefix"))[0][-1], dtype=dtype
+            )
         input_graph.add_node(
             node_index, features=create_feature(node_feature, input_node_fields, dtype)
         )
