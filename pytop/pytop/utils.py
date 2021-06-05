@@ -106,17 +106,21 @@ def graph_to_input_target(
             return None
         features = []
         for field in fields:
-            fattr = attr[field]
-            features.append(np.array(fattr, dtype=dtype))
+            fattr = np.array(attr[field], dtype=dtype)
+            if field == "interfaces":
+                fattr = fattr.T
+            features.append(fattr)
         return np.hstack(features)
 
     input_node_fields = (
-        input_fields["node"] if input_fields and "node" in input_fields else ("ip",)
+        input_fields["node"]
+        if input_fields and "node" in input_fields
+        else ("interfaces",)
     )
     input_edge_fields = (
         input_fields["edge"]
         if input_fields and "edge" in input_fields
-        else ("distance",)
+        else ("prefix", "distance")
     )
     target_node_fields = (
         target_fields["node"]
@@ -148,9 +152,9 @@ def graph_to_input_target(
     end = _graph.graph["target"]
     for node_index, node_feature in _graph.nodes(data=True):
         if node_index == end:
-            end_node = node_feature[global_field if global_field else "ip"].astype(
-                dtype
-            )
+            end_node = node_feature[
+                global_field if global_field else "interfaces"
+            ].astype(dtype)
         input_graph.add_node(
             node_index, features=create_feature(node_feature, input_node_fields, dtype)
         )

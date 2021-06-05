@@ -208,7 +208,7 @@ def get_zoo_graph(path, range_nodes, random_state=None):
         return None
     if G.number_of_nodes() > 255:
         return None
-    add_pos(G)
+    add_pos(G, random_state)
     add_edge_weights(G)
     add_ip_prefix(G, random_state)
     solve_duplicated_nodes(G)
