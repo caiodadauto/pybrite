@@ -34,7 +34,6 @@ def get_ips(n_links, random_state, prefix_range=(20, 28)):
         subnet_size = random_state.randint(1, _n_links + 1)
         subnet_sizes.append(subnet_size)
         _n_links -= subnet_size
-    print(n_links, subnet_sizes)
 
     prefixes = np.zeros((len(subnet_sizes), 33))
     for i, subnet_size in enumerate(subnet_sizes):
