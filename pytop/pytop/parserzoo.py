@@ -7,7 +7,7 @@ import networkx as nx
 from scipy import spatial
 from scipy.optimize import minimize
 
-from .utils import add_ip_prefix, ensure_connection
+from .utils import add_ip, ensure_connection, add_shortest_path
 
 
 header = re.compile(r"graph\s*\[")
@@ -202,6 +202,7 @@ def verify(G, path):
 
 def get_zoo_graph(path, range_nodes, random_state=None):
     path = Path(path)
+    random_state = np.random.RandomState() if random_state is None else random_state
     G = ignore_multigraph(path)
     G = ensure_connection(G)
     if not G.number_of_nodes() in range_nodes:
@@ -209,9 +210,10 @@ def get_zoo_graph(path, range_nodes, random_state=None):
     if G.number_of_nodes() > 255:
         return None
     add_pos(G, random_state)
-    add_edge_weights(G)
-    add_ip_prefix(G, random_state)
     solve_duplicated_nodes(G)
-    G.graph["from"] = "Zoo"
+    add_edge_weights(G)
     verify(G, path)
-    return G
+    digraph = add_shortest_path(G, random_state=random_state)
+    add_ip(digraph, random_state)
+    digraph.graph["from"] = "Zoo"
+    return digraph

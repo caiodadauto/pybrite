@@ -18,37 +18,55 @@ def ensure_connection(graph):
     return largest_component
 
 
-def add_ip_prefix(G, random_state):
-    # idx = {}
-    edges = G.edges()
-    # degrees = G.degree()
-    # node_interfaces = {}
-    prefixes = get_prefix(G.number_of_edges(), random_state=random_state)
-    # for n, d in degrees:
-    #     idx[n] = 0
-    #     node_interfaces[n] = np.zeros((d, 32))
-    for i, (p, s) in enumerate(edges):
-        G.add_edge(p, s, prefix=prefixes[i])
-    #     node_interfaces[p][idx[p]] = prefixes[i]
-    #     node_interfaces[s][idx[s]] = prefixes[i]
-    #     idx[p] += 1
-    #     idx[s] += 1
-    # node_params = list(
-    #     map(lambda t: (t[0], dict(interfaces=t[1])), tuple(node_interfaces.items()))
-    # )
-    # G.add_nodes_from(node_params)
+def add_ip(digraph, random_state):
+    graph = digraph.to_undirected()
+    n_links = graph.number_of_edges()
+    ips = get_ips(n_links, random_state)
+    for i, (u, v) in enumerate(graph.edges()):
+        digraph.add_edge(u, v, ip=ips[i, 0])
+        digraph.add_edge(v, u, ip=ips[i, 1])
 
 
-def get_prefix(n_subnets, range_subnet_mask=(24, 28), random_state=None):
-    random_state = random_state if random_state else np.random.RandomState()
-    prefixes = np.zeros((n_subnets, 32))
-    for i in range(n_subnets):
+def get_ips(n_links, random_state, prefix_range=(20, 28)):
+    subnet_sizes = []
+    _n_links = n_links
+    while _n_links > 0:
+        subnet_size = random_state.randint(1, _n_links + 1)
+        subnet_sizes.append(subnet_size)
+        _n_links -= subnet_size
+    print(n_links, subnet_sizes)
+
+    prefixes = np.zeros((len(subnet_sizes), 33))
+    for i, subnet_size in enumerate(subnet_sizes):
         prefix = prefixes[i].copy()
-        while np.any([np.all(cmp) for cmp in prefix == prefixes]):
-            subnet_mask = random_state.choice(range_subnet_mask)
-            prefix[0:subnet_mask] = random_state.choice([0, 1], size=subnet_mask)
+        while np.any(np.all(prefix == prefixes, axis=-1)):
+            prefix_size = 32
+            while 2 ** (32 - prefix_size) - 1 < subnet_size * 2:
+                prefix_size = random_state.choice(prefix_range)
+            prefix[0:prefix_size] = random_state.choice([0, 1], size=prefix_size)
+        prefix[-1] = prefix_size
         prefixes[i] = prefix
-    return prefixes
+
+    c = 0
+    ips = np.zeros((n_links, 2, 32))
+    for prefix, subnet_size in zip(prefixes, subnet_sizes):
+        prefix_size = prefix[-1]
+        prefix = prefix[0:-1]
+        suffix_size = int(32 - prefix_size)
+        ips[c:c + subnet_size, :] = prefix.copy()
+        for i in range(subnet_size):
+            for j in [0, 1]:
+                ip = prefix.copy()
+                while np.any(
+                    np.all(
+                        ip[-suffix_size:] == ips[c:c + subnet_size, :, -suffix_size:],
+                        axis=-1,
+                    )
+                ):
+                    ip[-suffix_size:] = random_state.choice([0, 1], size=suffix_size)
+                ips[c + i, j, :] = ip.copy()
+        c += subnet_size
+    return ips
 
 
 def pairwise(iterable):
@@ -100,6 +118,7 @@ def graph_to_input_target(
     target_fields=None,
     global_field=None,
     bidim_solution=True,
+    random_state=None,
 ):
     def create_feature(attr, fields, dtype):
         if fields == ():
@@ -107,8 +126,6 @@ def graph_to_input_target(
         features = []
         for field in fields:
             fattr = np.array(attr[field], dtype=dtype)
-            # if field == "interfaces":
-            #     fattr = fattr.T
             features.append(fattr)
         return np.hstack(features)
 
@@ -118,7 +135,7 @@ def graph_to_input_target(
     input_edge_fields = (
         input_fields["edge"]
         if input_fields and "edge" in input_fields
-        else ("prefix", "distance")
+        else ("ip", "distance")
     )
     target_node_fields = (
         target_fields["node"]
@@ -130,6 +147,7 @@ def graph_to_input_target(
         if target_fields and "edge" in target_fields
         else ("solution",)
     )
+    random_state = np.random.RandomState() if random_state is None else random_state
 
     _graph = graph.copy()
     if scaler is not None:
@@ -147,12 +165,14 @@ def graph_to_input_target(
     input_graph = _graph.copy()
     target_graph = _graph.copy()
 
-    end = _graph.graph["target"]
+    destination = _graph.graph["target"]
+    destination_in_degree = _graph.in_degree(destination)
+    destination_interface_idx = random_state.choice(range(destination_in_degree))
+    destination_interface = list(_graph.in_edges(destination, data="ip"))[
+        destination_interface_idx
+    ][-1]
+
     for node_index, node_feature in _graph.nodes(data=True):
-        if node_index == end:
-            end_node = np.array(
-                list(_graph.in_edges(node_index, data="prefix"))[0][-1], dtype=dtype
-            )
         input_graph.add_node(
             node_index, features=create_feature(node_feature, input_node_fields, dtype)
         )
@@ -177,6 +197,6 @@ def graph_to_input_target(
             target_edge = create_feature(edge_feature, target_edge_fields, dtype)
         target_graph.add_edge(sender, receiver, features=target_edge)
 
-    input_graph.graph["features"] = end_node
-    target_graph.graph["features"] = end_node
+    input_graph.graph["features"] = destination_interface
+    target_graph.graph["features"] = destination_interface
     return input_graph, target_graph, raw_features

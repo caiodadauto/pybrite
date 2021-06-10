@@ -4,9 +4,8 @@ import subprocess as sub
 
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
-from .utils import add_ip_prefix, add_shortest_path
+from .utils import add_ip, add_shortest_path
 from .paths import (
     GRAPH_BRITE_PATH,
     BRITE_CONFIG_PATH,
@@ -260,9 +259,7 @@ def create_brite_graph(
         composition,
         random_state,
     )
-    # nx.draw(G, pos=G.nodes(data="pos"), node_size=50)
-    # plt.savefig("/home/caio/Documents/university/Ph.D./topology/before_adding_nodes.pdf")
     add_barabasi_edges(G, top_class, composition_labels, random_state)
-    add_ip_prefix(G, random_state)
     digraph = add_shortest_path(G, random_state=random_state)
+    add_ip(digraph, random_state)
     return digraph
