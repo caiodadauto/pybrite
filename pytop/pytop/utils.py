@@ -165,9 +165,9 @@ def graph_to_input_target(
     target_graph = _graph.copy()
 
     destination = _graph.graph["target"]
-    destination_in_degree = _graph.in_degree(destination)
-    destination_interface_idx = random_state.choice(range(destination_in_degree))
-    destination_interface = list(_graph.in_edges(destination, data="ip"))[
+    destination_out_degree = _graph.out_degree(destination)
+    destination_interface_idx = random_state.choice(range(destination_out_degree))
+    destination_interface = list(_graph.out_edges(destination, data="ip"))[
         destination_interface_idx
     ][-1].astype(dtype)
 
