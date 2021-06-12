@@ -169,7 +169,7 @@ def graph_to_input_target(
     destination_interface_idx = random_state.choice(range(destination_in_degree))
     destination_interface = list(_graph.in_edges(destination, data="ip"))[
         destination_interface_idx
-    ][-1]
+    ][-1].astype(dtype)
 
     for node_index, node_feature in _graph.nodes(data=True):
         input_graph.add_node(
