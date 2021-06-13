@@ -42,6 +42,7 @@ def batch_files_generator(
             os.path.splitext(f)[0] for f in os.listdir(
                 str(graphdir)) if os.path.splitext(f)[1] == "." + file_ext
         ]
+        dataset_size = len(suffix)
     else:
         suffix = np.arange(0, dataset_size, 1)
     if shuffle:
