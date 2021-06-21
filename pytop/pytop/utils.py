@@ -15,6 +15,16 @@ def ensure_connection(graph):
             max_idx = i
     if len(components) > 0:
         largest_component = graph.subgraph(components[max_idx]).copy()
+    nx.relabel_nodes(
+        largest_component,
+        dict(
+            zip(
+                sorted(largest_component.nodes()),
+                range(largest_component.number_of_nodes()),
+            )
+        ),
+        copy=False,
+    )
     return largest_component
 
 
@@ -52,13 +62,13 @@ def get_ips(n_links, random_state, prefix_range=(20, 28)):
         prefix_size = prefix[-1]
         prefix = prefix[0:-1]
         suffix_size = int(32 - prefix_size)
-        ips[c:c + subnet_size, :] = prefix.copy()
+        ips[c : c + subnet_size, :] = prefix.copy()
         for i in range(subnet_size):
             for j in [0, 1]:
                 ip = prefix.copy()
                 while np.any(
                     np.all(
-                        ip[-suffix_size:] == ips[c:c + subnet_size, :, -suffix_size:],
+                        ip[-suffix_size:] == ips[c : c + subnet_size, :, -suffix_size:],
                         axis=-1,
                     )
                 ):

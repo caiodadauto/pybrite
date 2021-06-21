@@ -66,21 +66,24 @@ def ignore_multigraph(path):
     return graph
 
 
-def solve_duplicated_nodes(G):
+def solve_duplicated_nodes(G, random_state):
     pos = np.array(list(dict(G.nodes(data="pos")).values()))
     for v, vp in enumerate(pos):
         for u, up in zip(range(v + 1, len(pos)), pos[v + 1 :]):
             if np.all(vp == up):
-                vnn = np.array(list(G.neighbors(v)))
                 unn = np.array(list(G.neighbors(u)))
-                x_scale = 1.3 + np.random.random(1)[0] * 0.3
-                y_scale = 1.3 + np.random.random(1)[0] * 0.3
-                x_scale *= np.random.choice([1, -1])
-                y_scale *= np.random.choice([1, -1])
-                new_up = [vp[0] * x_scale, vp[1] * y_scale]
+                x_scale = 1.3 + random_state.random() * 0.3
+                y_scale = 1.3 + random_state.random() * 0.3
+                x_scale *= random_state.choice([1, -1])
+                y_scale *= random_state.choice([1, -1])
+                new_up = [up[0] * x_scale, up[1] * y_scale]
                 G.add_node(u, pos=new_up)
                 for nn in unn:
-                    nnp = pos[nn]
+                    try:
+                        nnp = pos[nn]
+                    except Exception:
+                        print(nn, list(G.neighbors(u)))
+                        quit()
                     G[u][nn]["distance"] = np.linalg.norm(nnp - new_up)
 
 
@@ -210,10 +213,11 @@ def get_zoo_graph(path, range_nodes, random_state=None):
     if G.number_of_nodes() > 255:
         return None
     add_pos(G, random_state)
-    solve_duplicated_nodes(G)
+    solve_duplicated_nodes(G, random_state)
     add_edge_weights(G)
     verify(G, path)
     digraph = add_shortest_path(G, random_state=random_state)
     add_ip(digraph, random_state)
     digraph.graph["from"] = "Zoo"
+    print("---------------------")
     return digraph
