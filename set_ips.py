@@ -12,6 +12,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("path", type=str, help="Path of the dataset")
     p.add_argument("--size", default=-1, type=str, help="Size of the dataset")
+    p.add_argument("--draw", action="store_true")
     args = p.parse_args()
 
     random_state = np.random.RandomState(12345)
@@ -23,6 +24,8 @@ if __name__ == "__main__":
         path = os.path.join(args.path, "{}.gpickle".format(name))
         digraph = nx.read_gpickle(path)
         add_ip(digraph, random_state)
-        draw_ip_clusters(digraph, ext="png", name=name)
+        if args.draw:
+            draw_ip_clusters(digraph, ext="png", name=name)
+        nx.write_gpickle(digraph, path)
 
 
