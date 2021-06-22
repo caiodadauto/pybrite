@@ -43,7 +43,7 @@ def add_ip(digraph, random_state, ratio_upper_range=(0.1, 0.2)):
         subnet_n_links[label_u] += 1
         subnet_n_links[label_v] += 1
     ips, prefix_sizes = get_ips(subnet_n_links, random_state)
-    print(prefix_sizes, subnet_n_links)
+
     subnet_start_idx = np.cumsum(subnet_n_links)
     subnet_start_idx[-1] = 0
     subnet_start_idx = np.roll(subnet_start_idx, 1)
