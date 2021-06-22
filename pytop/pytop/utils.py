@@ -2,6 +2,7 @@ import itertools
 
 import numpy as np
 import networkx as nx
+from sklearn.cluster import spectral_clustering
 
 
 def ensure_connection(graph):
@@ -28,54 +29,69 @@ def ensure_connection(graph):
     return largest_component
 
 
-def add_ip(digraph, random_state):
+def add_ip(digraph, random_state, ratio_upper_range=(0.1, 0.2)):
     graph = digraph.to_undirected()
-    n_links = graph.number_of_edges()
-    ips = get_ips(n_links, random_state)
+    n_nodes = graph.number_of_nodes()
+    upper_bound = random_state.choice(ratio_upper_range)
+    n_subnets = random_state.choice([1, int(upper_bound * n_nodes)])
+    labels = spectral_clustering(nx.adjacency_matrix(graph), n_clusters=n_subnets)
+    _, subnet_n_nodes = np.unique(labels, return_counts=True)
+    subnet_n_links = np.zeros(n_subnets, dtype=int)
     for i, (u, v) in enumerate(graph.edges()):
-        digraph.add_edge(u, v, ip=ips[i, 0])
-        digraph.add_edge(v, u, ip=ips[i, 1])
+        label_u = labels[u]
+        label_v = labels[v]
+        subnet_n_links[label_u] += 1
+        subnet_n_links[label_v] += 1
+    ips, prefix_sizes = get_ips(subnet_n_links, random_state)
+    print(prefix_sizes, subnet_n_links)
+    subnet_start_idx = np.cumsum(subnet_n_links)
+    subnet_start_idx[-1] = 0
+    subnet_start_idx = np.roll(subnet_start_idx, 1)
+    for p, s in digraph.edges():
+        label_p = labels[p]
+        digraph.add_edge(
+            p,
+            s,
+            ip=ips[subnet_start_idx[label_p]],
+            prefix_size=prefix_sizes[label_p],
+            cluster=label_p,
+        )
+        subnet_start_idx[label_p] += 1
+    for n in digraph.nodes():
+        label = labels[n]
+        digraph.add_node(n, cluster=label)
 
 
-def get_ips(n_links, random_state, prefix_range=(20, 28)):
-    subnet_sizes = []
-    _n_links = n_links
-    while _n_links > 0:
-        subnet_size = random_state.randint(1, _n_links + 1)
-        subnet_sizes.append(subnet_size)
-        _n_links -= subnet_size
-
-    prefixes = np.zeros((len(subnet_sizes), 33))
+def get_ips(subnet_sizes, random_state, prefix_range=(20, 28)):
+    prefix_sizes = np.zeros(len(subnet_sizes))
+    prefixes = np.zeros((len(subnet_sizes), 32))
     for i, subnet_size in enumerate(subnet_sizes):
         prefix = prefixes[i].copy()
         while np.any(np.all(prefix == prefixes, axis=-1)):
             prefix_size = 32
-            while 2 ** (32 - prefix_size) - 1 < subnet_size * 2:
+            while 2 ** (32 - prefix_size) - 1 < subnet_size:
                 prefix_size = random_state.choice(prefix_range)
             prefix[0:prefix_size] = random_state.choice([0, 1], size=prefix_size)
-        prefix[-1] = prefix_size
         prefixes[i] = prefix
+        prefix_sizes[i] = prefix_size
 
     c = 0
-    ips = np.zeros((n_links, 2, 32))
-    for prefix, subnet_size in zip(prefixes, subnet_sizes):
-        prefix_size = prefix[-1]
-        prefix = prefix[0:-1]
+    ips = np.zeros((subnet_sizes.sum(), 32))
+    for prefix, prefix_size, subnet_size in zip(prefixes, prefix_sizes, subnet_sizes):
         suffix_size = int(32 - prefix_size)
-        ips[c : c + subnet_size, :] = prefix.copy()
+        ips[c] = prefix.copy()
         for i in range(subnet_size):
-            for j in [0, 1]:
-                ip = prefix.copy()
-                while np.any(
-                    np.all(
-                        ip[-suffix_size:] == ips[c : c + subnet_size, :, -suffix_size:],
-                        axis=-1,
-                    )
-                ):
-                    ip[-suffix_size:] = random_state.choice([0, 1], size=suffix_size)
-                ips[c + i, j, :] = ip.copy()
+            ip = prefix.copy()
+            while np.any(
+                np.all(
+                    ip[-suffix_size:] == ips[c : c + subnet_size, -suffix_size:],
+                    axis=-1,
+                )
+            ):
+                ip[-suffix_size:] = random_state.choice([0, 1], size=suffix_size)
+            ips[c + i, :] = ip.copy()
         c += subnet_size
-    return ips
+    return ips, prefix_sizes
 
 
 def pairwise(iterable):

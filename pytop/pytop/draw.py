@@ -9,6 +9,21 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
+def draw_ip_clusters(digraph, name="", use_original_pos=False):
+    if use_original_pos:
+        pos = list(dict(digraph.nodes(data="pos")).values())
+    else:
+        pos = nx.spring_layout(digraph)
+
+    node_colors = list(dict(digraph.nodes(data="cluster")).values())
+    edge_colors = [c for _, _, c in list(digraph.edges(data="cluster"))]
+    nx.draw_networkx_nodes(digraph, pos=pos, node_color=node_colors)
+    nx.draw_networkx_edges(
+        digraph, pos=pos, connectionstyle="arc3,rad=0.2", edge_color=edge_colors
+    )
+    plt.savefig("ip_cluster_{}" + ".pdf")
+
+
 def plot(fn, name, ext, limits, **kwargs):
     sns.set_style("ticks")
     fig = plt.figure(dpi=400)
@@ -66,6 +81,7 @@ def get_metrics(dir_name):
     )
     return data
 
+
 def draw_metrics(dir_brite, dir_zoo, ext="png"):
     data_brite = get_metrics(dir_brite)
     data_zoo = get_metrics(dir_zoo)
@@ -106,7 +122,7 @@ def draw_metrics(dir_brite, dir_zoo, ext="png"):
         scatter,
         "CoV_x_size",
         ext,
-        None,#(-0.1, 1.46),
+        None,  # (-0.1, 1.46),
         x="Number of Nodes",
         y="CoV (std / mean)",
     )
@@ -114,7 +130,7 @@ def draw_metrics(dir_brite, dir_zoo, ext="png"):
         scatter,
         "assortativity_x_avg_degree",
         ext,
-        None,#(-1, 0.25),
+        None,  # (-1, 0.25),
         x="Avg Degrees",
         y="Assortativity",
     )
