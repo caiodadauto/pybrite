@@ -34,7 +34,7 @@ def add_ip(digraph, random_state, ratio_upper_range=(0.1, 0.2)):
     n_nodes = graph.number_of_nodes()
     upper_bound = random_state.choice(ratio_upper_range)
     n_subnets = random_state.choice([1, int(upper_bound * n_nodes)])
-    labels = spectral_clustering(nx.adjacency_matrix(graph), n_clusters=n_subnets)
+    labels = spectral_clustering(nx.adjacency_matrix(graph, weight="distance"), n_clusters=n_subnets)
     _, subnet_n_nodes = np.unique(labels, return_counts=True)
     subnet_n_links = np.zeros(n_subnets, dtype=int)
     for i, (u, v) in enumerate(graph.edges()):

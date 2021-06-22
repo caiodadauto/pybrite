@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-def draw_ip_clusters(digraph, name="", use_original_pos=False):
+def draw_ip_clusters(digraph, name="", ext="pdf", use_original_pos=False):
     if use_original_pos:
         pos = list(dict(digraph.nodes(data="pos")).values())
     else:
@@ -21,7 +21,11 @@ def draw_ip_clusters(digraph, name="", use_original_pos=False):
     nx.draw_networkx_edges(
         digraph, pos=pos, connectionstyle="arc3,rad=0.2", edge_color=edge_colors
     )
-    plt.savefig("ip_cluster_{}" + ".pdf")
+    if name == "":
+        plt.savefig("ip_cluster.{}".format(ext))
+    else:
+        plt.savefig("ip_cluster_{}".format(name) + ".{}".format(ext))
+    plt.close()
 
 
 def plot(fn, name, ext, limits, **kwargs):
