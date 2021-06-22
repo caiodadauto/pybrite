@@ -1,5 +1,6 @@
 import os
 import argparse
+from tqdm import tqdm
 
 import numpy as np
 import networkx as nx
@@ -20,7 +21,7 @@ if __name__ == "__main__":
         names = [p.split(".")[0] for p in os.listdir(args.path) if p.split(".")[-1] == "gpickle"]
     else:
         names = range(args.size)
-    for name in names:
+    for name in tqdm(names):
         path = os.path.join(args.path, "{}.gpickle".format(name))
         digraph = nx.read_gpickle(path)
         add_ip(digraph, random_state)
