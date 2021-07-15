@@ -413,7 +413,7 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     ratio = args.n_interval[0] // args.composition_interval[1]
-    if ratio < 6:
+    if ratio < 6 and args.type == "brite":
         raise ValueError(
             "The minumum value riquered for number of nodes"
             " is equal to the maximum number of compositions times 6."

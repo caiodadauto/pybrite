@@ -28,5 +28,3 @@ if __name__ == "__main__":
         if args.draw:
             draw_ip_clusters(digraph, ext="png", name=name)
         nx.write_gpickle(digraph, path)
-
-

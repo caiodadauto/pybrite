@@ -219,5 +219,4 @@ def get_zoo_graph(path, range_nodes, random_state=None):
     digraph = add_shortest_path(G, random_state=random_state)
     add_ip(digraph, random_state)
     digraph.graph["from"] = "Zoo"
-    print("---------------------")
     return digraph
