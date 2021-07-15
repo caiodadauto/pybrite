@@ -4,9 +4,8 @@ import subprocess as sub
 
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
-from .utils import ip_generator, add_shortest_path
+from .utils import add_ip, add_shortest_path
 from .paths import (
     GRAPH_BRITE_PATH,
     BRITE_CONFIG_PATH,
@@ -46,8 +45,6 @@ def brite_to_graph(random_state=None):
     is_node = False
     is_edge = False
     node_offset = -1
-    # topology_line = re.compile(r"^(Topology)", re.I)
-    # graph_size = re.compile(r"\(\s*(\d+)\s*Nodes,\s*(\d+)\s*Edges\s*\)", re.I)
     start_nodes = re.compile(r"^(\s*Nodes\s*:*\s*)", re.I)
     start_edges = re.compile(r"^(\s*Edges\s*:*\s*)", re.I)
     with open(GRAPH_BRITE_PATH + ".brite", "r") as brite_file:
@@ -55,9 +52,6 @@ def brite_to_graph(random_state=None):
             line = brite_file.readline()
             if not line:
                 break
-            # if topology_line.search(line):
-            #     n_nodes = int(graph_size.search(line).groups()[0])
-            #     ip_gen = ip_generator(n_nodes, random_state=random_state)
             if start_nodes.search(line):
                 is_node = True
                 continue
@@ -244,15 +238,6 @@ def add_barabasi_edges(G, top_class, composition_labels, random_state):
                 connection_prob = attention_degrees["degree"] / degree_sum
 
 
-def add_ip_addrs(G, random_state):
-    node_ips = []
-    n_nodes = G.number_of_nodes()
-    ip_gen = ip_generator(n_nodes, random_state=random_state)
-    for n in range(n_nodes):
-        node_ips.append((n, dict(ip=next(ip_gen, None))))
-    G.add_nodes_from(node_ips)
-
-
 def create_brite_graph(
     interval_node,
     interval_composition,
@@ -274,9 +259,7 @@ def create_brite_graph(
         composition,
         random_state,
     )
-    # nx.draw(G, pos=G.nodes(data="pos"), node_size=50)
-    # plt.savefig("/home/caio/Documents/university/Ph.D./topology/before_adding_nodes.pdf")
     add_barabasi_edges(G, top_class, composition_labels, random_state)
-    add_ip_addrs(G, random_state)
     digraph = add_shortest_path(G, random_state=random_state)
+    add_ip(digraph, random_state)
     return digraph
