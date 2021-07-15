@@ -1,5 +1,5 @@
 # Pytop
-![](https://github.com/caiodadauto/pytop/blob/master/graphs.png)
+![](https://github.com/caiodadauto/pytop/blob/master/imgs/graphs.png)
 
 **Pytop** is a Python package to generate topologies based on the *Boston University Representative Internet Topology Generator (BRITE)* and the dataset
 [Topology Zoo](http://www.topology-zoo.org/). This interface
