@@ -6,7 +6,7 @@ import numpy as np
 import networkx as nx
 
 from .utils import add_ip, add_shortest_path
-from .paths import (
+from .file_paths import (
     GRAPH_BRITE_PATH,
     BRITE_CONFIG_PATH,
     SEED_BRITE_PATH,

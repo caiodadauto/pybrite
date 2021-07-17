@@ -25,14 +25,17 @@ def build(setup_kwargs):
             sub.run(cmd_make, cwd=str(brite_path))
             sub.run(cmd_bin, cwd=str(brite_path))
 
-    # ext = [
-    #     Extension(
-    #         name="itdk.graph_utils.paths",
-    #         sources=["itdk/graph_utils/_paths.cpp", "itdk/graph_utils/paths.pyx"],
-    #         extra_compile_args=["-fopenmp"],
-    #         extra_link_args=["-fopenmp"],
-    #         language="c++",
-    #     )
-    # ]
-    # setup_kwargs.update({"ext_modules": ext, "cmdclass": {"build_ext": build_ext}})
+    os.environ['CC'] = 'gcc-10'
+    os.environ['CXX'] = 'g++-10'
+
+    ext = [
+        Extension(
+            name="pytop.cutils.min_weights",
+            sources=["pytop/cutils/_min_weights.cpp", "pytop/cutils/min_weights.pyx"],
+            # extra_compile_args=["-fopenmp"],
+            # extra_link_args=["-fopenmp"],
+            language="c++",
+        )
+    ]
+    setup_kwargs.update({"ext_modules": ext, "cmdclass": {"build_ext": build_ext}})
     build_brite()
